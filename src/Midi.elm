@@ -134,7 +134,7 @@ type alias Velocity =
 Verifies multipart system messages.
 -}
 isValidRecording : Recording -> Bool
-isValidRecording (Recording _ a b) =
+isValidRecording a =
     let
         validTrack : Bool -> List Message -> Bool
         validTrack multipart c =
@@ -145,9 +145,9 @@ isValidRecording (Recording _ a b) =
 
                 t :: ts ->
                     case ( t, multipart ) of
-                        ( ( _, SysEx F0 data ), False ) ->
+                        ( ( _, SysEx data ), False ) ->
                             case List.head (List.reverse data) of
-                                Just eox ->
+                                Just _ ->
                                     validTrack False ts
 
                                 _ ->
@@ -155,19 +155,8 @@ isValidRecording (Recording _ a b) =
 
                         -- After the first packet all parts of a multipart packet
                         -- start with F7.
-                        ( ( _, SysEx F0 _ ), True ) ->
+                        ( ( _, SysEx _ ), True ) ->
                             False
-
-                        ( ( _, SysEx F7 data ), True ) ->
-                            case List.head (List.reverse data) of
-                                Just eox ->
-                                    validTrack False ts
-
-                                _ ->
-                                    validTrack True ts
-
-                        ( ( _, SysEx F7 _ ), False ) ->
-                            validTrack multipart ts
 
                         -- There must be no MIDI events in between the packets of a
                         -- multipart sysex message.
@@ -177,4 +166,4 @@ isValidRecording (Recording _ a b) =
                         _ ->
                             validTrack multipart ts
     in
-    List.all (validTrack False) (a :: b)
+    List.all (validTrack False) (Tuple.first a.tracks :: Tuple.second a.tracks)
