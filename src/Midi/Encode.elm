@@ -225,6 +225,7 @@ endianness =
 
 varInt : Int -> Encode.Encoder
 varInt a =
+    -- TODO use Bytes module instead of Int
     let
         helper : Int -> List Int -> List Int
         helper b bytes =
