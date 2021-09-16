@@ -72,7 +72,7 @@ tracksDecoder trackCount =
                 Decode.succeed (Decode.Done (List.reverse acc))
 
             else
-                track
+                trackDecoder
                     |> Decode.map
                         (\v ->
                             Decode.Loop ( i + 1, v :: acc )
@@ -89,10 +89,15 @@ tracksDecoder trackCount =
             )
 
 
+trackDecoder : Decoder Midi.Track
+trackDecoder =
+    decodeConst "MTrk"
+        |> Decode.andThen (\_ -> Decode.unsignedInt32 endianness)
+        |> Decode.andThen (\_ -> messagesDecoder Nothing)
 
 
-midiMessages : Maybe Midi.Event -> Decoder (List MidiMessage)
-midiMessages parent =
+messagesDecoder : Maybe Midi.Event -> Decoder (List Midi.Message)
+messagesDecoder parent =
     midiMessage parent
         >>= continueOrNot
 
@@ -105,7 +110,7 @@ continueOrNot maybeLastMessage =
     case maybeLastMessage of
         ( ticks, Just lastEvent ) ->
             (::) ( ticks, lastEvent )
-                <$> midiMessages (Just lastEvent)
+                <$> messagesDecoder (Just lastEvent)
 
         ( _, Nothing ) ->
             succeed []
