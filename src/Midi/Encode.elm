@@ -148,8 +148,8 @@ event a =
         Midi.SequencerSpecific _ ->
             Err (NotSupported "SequencerSpecific")
 
-        Midi.Unspecified _ _ ->
-            Err (NotSupported "Unspecified")
+        Midi.Unknown _ _ ->
+            Err (NotSupported "Unknown")
 
         --
         Midi.NoteOff channel note velocity ->

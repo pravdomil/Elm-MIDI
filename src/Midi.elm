@@ -84,7 +84,7 @@ type Event
     | TimeSignature Int Int Int Int
     | KeySignature Int Int
     | SequencerSpecific (List Int)
-    | Unspecified Int (List Int)
+    | Unknown Int (List Int)
       -- Control
     | NoteOff Channel Note Velocity
     | NoteOn Channel Note Velocity
