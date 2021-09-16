@@ -97,6 +97,8 @@ type Event
     | ProgramChange Channel Int
     | ChannelAfterTouch Channel Velocity
     | PitchBend Channel Int
+      -- Other
+    | EndOfTrack
 
 
 {-| MIDI channel.
