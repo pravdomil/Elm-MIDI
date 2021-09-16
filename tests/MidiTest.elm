@@ -3,12 +3,12 @@ module MidiTest exposing (..)
 import Char
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, intRange)
-import Test exposing (..)
+import Midi.Generate as Generate
+import Midi.Parse as Parse
+import Midi.Types exposing (..)
 import Random.Pcg as Random exposing (Generator)
 import Shrink exposing (Shrinker)
-import Midi.Types exposing (..)
-import Midi.Parse as Parse
-import Midi.Generate as Generate
+import Test exposing (..)
 
 
 fuzzChannel : Fuzzer Channel
@@ -191,8 +191,8 @@ generateSysExFileEvent =
                     (Random.int 0 204)
                 )
     in
-        Random.choices
-            [ unescaped, escaped ]
+    Random.choices
+        [ unescaped, escaped ]
 
 
 commonEvents : List (Fuzzer MidiEvent)
@@ -266,7 +266,7 @@ generateMidiRecording =
                     SingleTrack ticks track
                 )
                 (Random.int 1 0x7FFF)
-                (generateTrack)
+                generateTrack
 
         generateMultipleTracks tracksType =
             Random.map2
@@ -285,7 +285,7 @@ generateMidiRecording =
             , generateMultipleTracks Independent
             ]
     in
-        Random.choices generators
+    Random.choices generators
 
 
 shrinkMidiMessage : Shrinker MidiMessage
@@ -314,7 +314,7 @@ shrinkMidiRecordingChangeFormat : Shrinker MidiRecording
 shrinkMidiRecordingChangeFormat midi =
     case midi of
         MultipleTracks tracksType ticksPerBeat ((track :: []) as tracks) ->
-            (shrinkMidiRecording (SingleTrack ticksPerBeat track))
+            shrinkMidiRecording (SingleTrack ticksPerBeat track)
 
         _ ->
             Shrink.noShrink midi
@@ -374,9 +374,9 @@ suite =
                     noteOff =
                         NoteOff channel note 0
                 in
-                    Expect.equal
-                        (Parse.event (toByteString (Generate.event noteOn)))
-                        (Parse.event (toByteString (Generate.event noteOff)))
+                Expect.equal
+                    (Parse.event (toByteString (Generate.event noteOn)))
+                    (Parse.event (toByteString (Generate.event noteOff)))
         , fuzz fuzzMidiEventSequence "Ensure toFileEvent helper works correctly." <|
             \midiEventSequence ->
                 let
@@ -386,7 +386,7 @@ suite =
                     recording =
                         SingleTrack 1 midiMessages
                 in
-                    Expect.true
-                        "Generated recording is valid."
-                        (validRecording recording)
+                Expect.true
+                    "Generated recording is valid."
+                    (validRecording recording)
         ]

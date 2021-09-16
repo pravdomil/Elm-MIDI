@@ -1,9 +1,4 @@
-module Midi.Parse
-    exposing
-        ( normalise
-        , file
-        , event
-        )
+module Midi.Parse exposing (normalise, file, event)
 
 {-| Module for parsing MIDI files
 
@@ -14,16 +9,17 @@ module Midi.Parse
 
 -}
 
-import Combine exposing (..)
-import Combine.Char exposing (..)
 import Bitwise exposing (..)
 import Char exposing (fromCode, toCode)
-import String exposing (fromList, toList)
+import Combine exposing (..)
+import Combine.Char exposing (..)
 import Debug exposing (..)
 import Maybe exposing (withDefault)
-import Tuple exposing (first, second)
 import Midi.Types exposing (..)
 import Result exposing (Result)
+import String exposing (fromList, toList)
+import Tuple exposing (first, second)
+
 
 
 -- low level parsers
@@ -42,8 +38,9 @@ int8 =
 signedInt8 : Parser s Int
 signedInt8 =
     (\i ->
-        if (i > 127) then
+        if i > 127 then
             i - 256
+
         else
             i
     )
@@ -56,7 +53,7 @@ signedInt8 =
 
 bchar : Int -> Parser s Int
 bchar val =
-    toCode <$> char (fromCode (val))
+    toCode <$> char (fromCode val)
 
 
 
@@ -70,7 +67,7 @@ brange l r =
         f a =
             toCode a >= l && toCode a <= r
     in
-        toCode <$> satisfy f
+    toCode <$> satisfy f
 
 
 
@@ -88,7 +85,7 @@ notTrackEnd =
         c =
             fromCode 0x2F
     in
-        toCode <$> noneOf [ c ]
+    toCode <$> noneOf [ c ]
 
 
 
@@ -101,7 +98,7 @@ uint16 =
         toInt16 a b =
             shiftLeftBy 8 a + b
     in
-        toInt16 <$> int8 <*> int8
+    toInt16 <$> int8 <*> int8
 
 
 uint24 : Parser s Int
@@ -110,7 +107,7 @@ uint24 =
         toInt24 a b c =
             shiftLeftBy 16 a + shiftLeftBy 8 b + c
     in
-        toInt24 <$> int8 <*> int8 <*> int8
+    toInt24 <$> int8 <*> int8 <*> int8
 
 
 uint32 : Parser s Int
@@ -119,7 +116,7 @@ uint32 =
         toUint32 a b c d =
             shiftLeftBy 24 a + shiftLeftBy 16 b + shiftLeftBy 8 c + d
     in
-        toUint32 <$> int8 <*> int8 <*> int8 <*> int8
+    toUint32 <$> int8 <*> int8 <*> int8 <*> int8
 
 
 
@@ -130,16 +127,17 @@ varIntHelper : Parser s (List Int)
 varIntHelper =
     int8
         >>= (\n ->
-                if (n < 128) then
+                if n < 128 then
                     succeed [ n ]
+
                 else
-                    ((::) (and 127 n)) <$> varIntHelper
+                    (::) (and 127 n) <$> varIntHelper
             )
 
 
 varInt : Parser s Int
 varInt =
-    List.foldl (\n -> \acc -> (shiftLeftBy 7 acc) + n) 0 <$> varIntHelper
+    List.foldl (\n -> \acc -> shiftLeftBy 7 acc + n) 0 <$> varIntHelper
 
 
 
@@ -179,12 +177,13 @@ type alias Header =
 midiHeader : Parser s Header
 midiHeader =
     string "MThd"
-        *> let
-            h =
-                headerChunk <$> uint32 <*> uint16 <*> uint16 <*> uint16
-           in
+        *> (let
+                h =
+                    headerChunk <$> uint32 <*> uint16 <*> uint16 <*> uint16
+            in
             consumeOverspill h 6
                 <?> "header"
+           )
 
 
 midiTracks : Header -> Parser s MidiRecording
@@ -193,8 +192,9 @@ midiTracks h =
         0 ->
             if h.trackCount == 1 then
                 SingleTrack h.ticksPerBeat <$> midiTrack <?> "midi track for single track file"
+
             else
-                fail ("Single track file with " ++ (toString h.trackCount) ++ " tracks.")
+                fail ("Single track file with " ++ toString h.trackCount ++ " tracks.")
 
         1 ->
             MultipleTracks Simultaneous h.ticksPerBeat
@@ -205,7 +205,7 @@ midiTracks h =
                 <$> (count h.trackCount midiTrack <?> "midi track for independent tracks file")
 
         f ->
-            fail ("Unknown MIDI file format " ++ (toString f))
+            fail ("Unknown MIDI file format " ++ toString f)
 
 
 
@@ -235,7 +235,7 @@ continueOrNot : ( Ticks, Maybe MidiEvent ) -> Parser s (List MidiMessage)
 continueOrNot maybeLastMessage =
     case maybeLastMessage of
         ( ticks, Just lastEvent ) ->
-            ((::) ( ticks, lastEvent ))
+            (::) ( ticks, lastEvent )
                 <$> midiMessages (Just lastEvent)
 
         ( _, Nothing ) ->
@@ -342,7 +342,7 @@ metaFileEvent =
 
 parseEndOfTrack : Parser s (Maybe MidiEvent)
 parseEndOfTrack =
-    (bchar 0x2F *> bchar 0x00 *> (succeed Nothing) <?> "sequence number")
+    bchar 0x2F *> bchar 0x00 *> succeed Nothing <?> "sequence number"
 
 
 parseSequenceNumber : Parser s MidiEvent
@@ -460,13 +460,13 @@ sysExEvent =
         eoxChar =
             fromCode eox
     in
-        (\bytes -> SysEx F0 bytes)
-            <$> (List.map toCode
-                    <$> (String.toList
-                            <$> (bchar 0xF0 *> while ((/=) eoxChar))
-                        )
-                )
-            <?> "system exclusive"
+    (\bytes -> SysEx F0 bytes)
+        <$> (List.map toCode
+                <$> (String.toList
+                        <$> (bchar 0xF0 *> while ((/=) eoxChar))
+                    )
+            )
+        <?> "system exclusive"
 
 
 
@@ -514,8 +514,8 @@ fileSysExEvent =
                     )
                 <?> "escaped system exclusive"
     in
-        (parseUnescapedSysex <|> parseEscapedSysex)
-            <?> "system exclusive (MIDI file)"
+    (parseUnescapedSysex <|> parseEscapedSysex)
+        <?> "system exclusive (MIDI file)"
 
 
 
@@ -617,25 +617,25 @@ runningStatus : Maybe MidiEvent -> Parser s MidiEvent
 runningStatus parent =
     case parent of
         Just (NoteOn status _ _) ->
-            (NoteOn status) <$> int8 <*> int8 <?> "note on running status"
+            NoteOn status <$> int8 <*> int8 <?> "note on running status"
 
         Just (NoteOff status _ _) ->
-            (NoteOff status) <$> int8 <*> int8 <?> "note off running status"
+            NoteOff status <$> int8 <*> int8 <?> "note off running status"
 
         Just (NoteAfterTouch status _ _) ->
-            (NoteAfterTouch status) <$> int8 <*> int8 <?> "note aftertouch running status"
+            NoteAfterTouch status <$> int8 <*> int8 <?> "note aftertouch running status"
 
         Just (ControlChange status _ _) ->
-            (ControlChange status) <$> int8 <*> int8 <?> "control change running status"
+            ControlChange status <$> int8 <*> int8 <?> "control change running status"
 
         Just (ProgramChange status _) ->
-            (ProgramChange status) <$> int8 <?> "program change running status"
+            ProgramChange status <$> int8 <?> "program change running status"
 
         Just (ChannelAfterTouch status _) ->
-            (ChannelAfterTouch status) <$> int8 <?> "channel aftertouch running status"
+            ChannelAfterTouch status <$> int8 <?> "channel aftertouch running status"
 
         Just (PitchBend status _) ->
-            (PitchBend status) <$> int8 <?> "pitch bend running status"
+            PitchBend status <$> int8 <?> "pitch bend running status"
 
         Just _ ->
             fail "inappropriate parent for running status"
@@ -661,14 +661,14 @@ buildNote cmd note velocity =
             and cmd 0x0F
 
         isOff =
-            (velocity == 0)
+            velocity == 0
     in
-        case isOff of
-            True ->
-                NoteOff channel note velocity
+    case isOff of
+        True ->
+            NoteOff channel note velocity
 
-            _ ->
-                NoteOn channel note velocity
+        _ ->
+            NoteOn channel note velocity
 
 
 
@@ -682,7 +682,7 @@ channelBuilder3 construct cmd x y =
             -- cmd `and` 0x0F
             and cmd 0x0F
     in
-        construct channel x y
+    construct channel x y
 
 
 channelBuilder2 : (Int -> Int -> MidiEvent) -> Int -> Int -> MidiEvent
@@ -692,7 +692,7 @@ channelBuilder2 construct cmd x =
             -- cmd `and` 0x0F
             and cmd 0x0F
     in
-        construct channel x
+    construct channel x
 
 
 
@@ -748,7 +748,7 @@ buildChannelAfterTouch cmd num =
 
 buildPitchBend : Int -> Int -> Int -> MidiEvent
 buildPitchBend cmd lsb msb =
-    channelBuilder2 PitchBend cmd <| lsb + (shiftLeftBy 7 msb)
+    channelBuilder2 PitchBend cmd <| lsb + shiftLeftBy 7 msb
 
 
 
@@ -761,7 +761,7 @@ buildTimeSig nn dd cc bb =
         denom =
             2 ^ dd
     in
-        TimeSignature nn denom cc bb
+    TimeSignature nn denom cc bb
 
 
 
@@ -801,7 +801,7 @@ event s =
             Ok n
 
         Err ( _, ctx, ms ) ->
-            Err ("parse error: " ++ (toString ms) ++ ", " ++ (toString ctx))
+            Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
 
 
 {-| entry point - Parse a normalised MIDI file image
@@ -813,7 +813,7 @@ file s =
             Ok n
 
         Err ( _, ctx, ms ) ->
-            Err ("parse error: " ++ (toString ms) ++ ", " ++ (toString ctx))
+            Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
 
 
 {-| Normalise the input before we parse by masking off all but the least
@@ -824,6 +824,6 @@ normalise : String -> String
 normalise =
     let
         f =
-            toCode >> ((and) 0xFF) >> fromCode
+            toCode >> and 0xFF >> fromCode
     in
-        String.toList >> List.map f >> String.fromList
+    String.toList >> List.map f >> String.fromList
