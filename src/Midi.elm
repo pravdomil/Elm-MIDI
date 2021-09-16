@@ -4,7 +4,7 @@ module Midi exposing
     , endOfExclusive, isValidRecording
     )
 
-{-| Type Definition of a MIDI recording
+{-| Type definitions for MIDI.
 
 
 # Data Types
@@ -21,42 +21,37 @@ module Midi exposing
 -}
 
 
-{-| Midi Tick
-
-elapsed time
-
+{-| Midi tick (elapsed time).
 -}
 type alias Ticks =
     Int
 
 
-{-| just a hint that we're really interested in the bytes
-in some MidiEvent constructors that return Lists
+{-| Hint that we're interested in the bytes in some MidiEvent constructors.
 -}
 type alias Byte =
     Int
 
 
-{-| Midi Channel
+{-| Midi channel.
 -}
 type alias Channel =
     Int
 
 
-{-| Midi Note
+{-| Midi note.
 -}
 type alias Note =
     Int
 
 
-{-| Midi Velocity (
-volume
+{-| Midi velocity (volume).
 -}
 type alias Velocity =
     Int
 
 
-{-| SysExFlavour
+{-| System exclusive message.
 
 Discriminate between two different forms of SysExEvrnt as characterised by the
 lead-in byte, See <https://www.csie.ntu.edu.tw/~r92092/ref/midi/#sysex_event>.
