@@ -534,25 +534,6 @@ buildTimeSig nn dd cc bb =
 -- Helpers
 
 
-{-| Consume the overspill from a non-standard size chunk.
-Actual is the parsed actual chunk size followed by the chunk contents (which are returned).
-Expected is the expected size of the chunk.
-Consume the rest if the difference suggests an overspill of unwanted chunk material.
--}
-consumeOverspill : Decoder ( Int, a ) -> Int -> Decoder a
-consumeOverspill actual expected =
-    actual
-        >>= (\( cnt, rest ) ->
-                map (\_ -> rest) <|
-                    skip <|
-                        count (cnt - expected) uInt8
-            )
-
-
-
--- Helpers
-
-
 {-| Variable length integers.
 -}
 varInt : Decoder Int
