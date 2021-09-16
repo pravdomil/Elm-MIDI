@@ -9,25 +9,21 @@ module Midi.Decode exposing (normalise, file, event)
 import Parser exposing (Parser)
 
 
-
--- variable length integers
-
-
-varIntHelper : Parser (List Int)
-varIntHelper =
-    uInt8
-        >>= (\n ->
-                if n < 128 then
-                    succeed [ n ]
-
-                else
-                    (::) (and 127 n) <$> varIntHelper
-            )
-
-
 varInt : Parser Int
 varInt =
-    List.foldl (\n -> \acc -> shiftLeftBy 7 acc + n) 0 <$> varIntHelper
+    let
+        helper : Parser (List Int)
+        helper =
+            uInt8
+                >>= (\n ->
+                        if n < 128 then
+                            succeed [ n ]
+
+                        else
+                            (::) (and 127 n) <$> helper
+                    )
+    in
+    List.foldl (\n -> \acc -> shiftLeftBy 7 acc + n) 0 <$> helper
 
 
 
