@@ -1,7 +1,7 @@
 module Midi exposing
     ( Track, MidiEvent(..), MidiMessage, TracksType(..), MidiRecording(..), Byte, Channel
     , Note, Velocity, SysExFlavour(..), Ticks
-    , eox, validRecording
+    , endOfExclusive, isValidRecording
     )
 
 {-| Type Definition of a MIDI recording
@@ -136,10 +136,10 @@ type MidiRecording
 -}
 
 
-{-| Constants
+{-| End of exclusive byte.
 -}
-eox : Int
-eox =
+endOfExclusive : Byte
+endOfExclusive =
     0xF7
 
 
