@@ -1,7 +1,7 @@
 module Midi exposing
     ( Recording(..), TrackType(..), Track
     , Message, Ticks, Event(..)
-    , Channel, Note, Velocity, SysExType(..)
+    , Channel, Note, Velocity
     , endOfExclusive, isValidRecording
     )
 
@@ -14,7 +14,7 @@ module Midi exposing
 
 @docs Message, Ticks, Event
 
-@docs Channel, Note, Velocity, SysExType
+@docs Channel, Note, Velocity
 
 
 # Helpers
@@ -82,7 +82,7 @@ type Event
     | TimeSignature Int Int Int Int
     | KeySignature Int Int
     | SequencerSpecific (List Int)
-    | SysEx SysExType (List Int)
+    | SysEx (List Int)
     | Unspecified Int (List Int)
       -- channel messages
     | NoteOn Channel Note Velocity
@@ -110,16 +110,6 @@ type alias Note =
 -}
 type alias Velocity =
     Int
-
-
-{-| System exclusive message type.
-
-Distinguish between two different forms of system messages as characterised by the lead-in byte.
-
--}
-type SysExType
-    = F0 -- normal
-    | F7 -- escaped
 
 
 {-|
