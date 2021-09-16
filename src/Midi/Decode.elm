@@ -93,31 +93,27 @@ track : Decoder Midi.Track
 track =
     decodeConst "MTrk"
         |> Decode.andThen (\_ -> Decode.unsignedInt32 endianness)
-        |> Decode.andThen (\_ -> messages Nothing)
+        |> Decode.andThen (\_ -> messages)
 
 
-messages : Maybe Midi.Event -> Decoder (List Midi.Message)
-messages parent =
-    midiMessage parent
-        >>= continueOrNot
+messages : Decoder (List Midi.Message)
+messages =
+    Decode.loop []
+        (\acc ->
+            message (List.head acc)
+                |> Decode.map
+                    (\v ->
+                        if v.event == Midi.EndOfTrack then
+                            Decode.Done (List.reverse acc)
+
+                        else
+                            Decode.Loop (v :: acc)
+                    )
+        )
 
 
-{-| Keep reading unless we just saw an End of Track message
-which would cause us to get Nothing passed in here.
--}
-continueOrNot : ( Ticks, Maybe Midi.Event ) -> Decoder (List MidiMessage)
-continueOrNot maybeLastMessage =
-    case maybeLastMessage of
-        ( ticks, Just lastEvent ) ->
-            (::) ( ticks, lastEvent )
-                <$> messages (Just lastEvent)
-
-        ( _, Nothing ) ->
-            succeed []
-
-
-midiMessage : Maybe Midi.Event -> Decoder ( Ticks, Midi.Event )
-midiMessage parent =
+message : Maybe Midi.Message -> Decoder Midi.Message
+message parent =
     (,)
         <$> varInt
         <*> midiFileEvent parent
