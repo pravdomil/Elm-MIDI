@@ -203,7 +203,7 @@ fileEvent e =
 
 
 
--- Helper functions
+-- Helpers
 
 
 varInt : Int -> List Int
