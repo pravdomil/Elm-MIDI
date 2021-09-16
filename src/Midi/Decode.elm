@@ -144,15 +144,15 @@ make sense of them.
 midiEvent : Maybe Midi.Event -> Decoder Midi.Event
 midiEvent parent =
     choice
-        [ metaEvent
-        , sysExEvent
-        , noteOn
-        , noteOff
-        , noteAfterTouch
-        , controlChange
-        , programChange
-        , channelAfterTouch
-        , pitchBend
+        [ eventMeta
+        , eventSysEx
+        , eventNoteOn
+        , eventNoteOff
+        , eventNoteAfterTouch
+        , eventControlChange
+        , eventProgramChange
+        , eventChannelAfterTouch
+        , eventPitchBend
         ]
         <?> "midi event"
 
@@ -160,16 +160,16 @@ midiEvent parent =
 midiFileEvent : Maybe Midi.Event -> Decoder (Maybe Midi.Event)
 midiFileEvent parent =
     choice
-        [ metaFileEvent
-        , Just <$> noteOn
-        , Just <$> noteOff
-        , Just <$> noteAfterTouch
-        , Just <$> controlChange
-        , Just <$> programChange
-        , Just <$> channelAfterTouch
-        , Just <$> pitchBend
-        , Just <$> fileSysExEvent
-        , Just <$> runningStatus parent
+        [ eventMetaFile
+        , Just <$> eventNoteOn
+        , Just <$> eventNoteOff
+        , Just <$> eventNoteAfterTouch
+        , Just <$> eventControlChange
+        , Just <$> eventProgramChange
+        , Just <$> eventChannelAfterTouch
+        , Just <$> eventPitchBend
+        , Just <$> eventFileSysExEvent
+        , Just <$> eventRunningStatus parent
         ]
         <?> "midi event"
 
@@ -178,49 +178,49 @@ midiFileEvent parent =
 -- Metadata
 
 
-metaEvent : Decoder Midi.Event
-metaEvent =
+eventMeta : Decoder Midi.Event
+eventMeta =
     bChar 0xFF
         *> choice
-            [ parseSequenceNumber
-            , parseText
-            , parseCopyright
-            , parseTrackName
-            , parseInstrumentName
-            , parseLyrics
-            , parseMarker
-            , parseCuePoint
-            , parseChannelPrefix
-            , parseTempoChange
-            , parseSMPTEOffset
-            , parseTimeSignature
-            , parseKeySignature
-            , parseSequencerSpecific
-            , parseUnspecified
+            [ eventSequenceNumber
+            , eventText
+            , eventCopyright
+            , eventTrackName
+            , eventInstrumentName
+            , eventLyrics
+            , eventMarker
+            , eventCuePoint
+            , eventChannelPrefix
+            , eventTempoChange
+            , eventSMPTEOffset
+            , eventTimeSignature
+            , eventKeySignature
+            , eventSequencerSpecific
+            , eventUnspecified
             ]
         <?> "meta event"
 
 
-metaFileEvent : Decoder (Maybe Midi.Event)
-metaFileEvent =
+eventMetaFile : Decoder (Maybe Midi.Event)
+eventMetaFile =
     bChar 0xFF
         *> choice
-            [ Just <$> parseSequenceNumber
-            , Just <$> parseText
-            , Just <$> parseCopyright
-            , Just <$> parseTrackName
-            , Just <$> parseInstrumentName
-            , Just <$> parseLyrics
-            , Just <$> parseMarker
-            , Just <$> parseCuePoint
-            , Just <$> parseChannelPrefix
-            , Just <$> parseTempoChange
-            , Just <$> parseSMPTEOffset
-            , Just <$> parseTimeSignature
-            , Just <$> parseKeySignature
-            , Just <$> parseSequencerSpecific
+            [ Just <$> eventSequenceNumber
+            , Just <$> eventText
+            , Just <$> eventCopyright
+            , Just <$> eventTrackName
+            , Just <$> eventInstrumentName
+            , Just <$> eventLyrics
+            , Just <$> eventMarker
+            , Just <$> eventCuePoint
+            , Just <$> eventChannelPrefix
+            , Just <$> eventTempoChange
+            , Just <$> eventSMPTEOffset
+            , Just <$> eventTimeSignature
+            , Just <$> eventKeySignature
+            , Just <$> eventSequencerSpecific
             , parseEndOfTrack
-            , Just <$> parseUnspecified
+            , Just <$> eventUnspecified
             ]
         <?> "meta event"
 
@@ -230,8 +230,8 @@ parseEndOfTrack =
     bChar 0x2F *> bChar 0x00 *> succeed Nothing <?> "sequence number"
 
 
-parseSequenceNumber : Decoder Midi.Event
-parseSequenceNumber =
+eventSequenceNumber : Decoder Midi.Event
+eventSequenceNumber =
     SequenceNumber <$> (bChar 0x00 *> bChar 0x02 *> uInt16 <?> "sequence number")
 
 
@@ -252,68 +252,68 @@ parseMetaBytes target =
         <$> (bChar target *> varInt >>= (\l -> count l anyChar))
 
 
-parseText : Decoder Midi.Event
-parseText =
+eventText : Decoder Midi.Event
+eventText =
     Text <$> parseMetaString 0x01 <?> "text"
 
 
-parseCopyright : Decoder Midi.Event
-parseCopyright =
+eventCopyright : Decoder Midi.Event
+eventCopyright =
     Copyright <$> parseMetaString 0x02 <?> "copyright"
 
 
-parseTrackName : Decoder Midi.Event
-parseTrackName =
+eventTrackName : Decoder Midi.Event
+eventTrackName =
     TrackName <$> parseMetaString 0x03 <?> "track name"
 
 
-parseInstrumentName : Decoder Midi.Event
-parseInstrumentName =
+eventInstrumentName : Decoder Midi.Event
+eventInstrumentName =
     InstrumentName <$> parseMetaString 0x04 <?> "instrument name"
 
 
-parseLyrics : Decoder Midi.Event
-parseLyrics =
+eventLyrics : Decoder Midi.Event
+eventLyrics =
     Lyrics <$> parseMetaString 0x05 <?> "lyrics"
 
 
-parseMarker : Decoder Midi.Event
-parseMarker =
+eventMarker : Decoder Midi.Event
+eventMarker =
     Marker <$> parseMetaString 0x06 <?> "marker"
 
 
-parseCuePoint : Decoder Midi.Event
-parseCuePoint =
+eventCuePoint : Decoder Midi.Event
+eventCuePoint =
     CuePoint <$> parseMetaString 0x07 <?> "cue point"
 
 
-parseChannelPrefix : Decoder Midi.Event
-parseChannelPrefix =
+eventChannelPrefix : Decoder Midi.Event
+eventChannelPrefix =
     ChannelPrefix <$> (bChar 0x20 *> bChar 0x01 *> uInt8 <?> "channel prefix")
 
 
-parseTempoChange : Decoder Midi.Event
-parseTempoChange =
+eventTempoChange : Decoder Midi.Event
+eventTempoChange =
     Tempo <$> (bChar 0x51 *> bChar 0x03 *> uInt24) <?> "tempo change"
 
 
-parseSMPTEOffset : Decoder Midi.Event
-parseSMPTEOffset =
+eventSMPTEOffset : Decoder Midi.Event
+eventSMPTEOffset =
     bChar 0x54 *> bChar 0x03 *> (SMPTEOffset <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <?> "SMTPE offset")
 
 
-parseTimeSignature : Decoder Midi.Event
-parseTimeSignature =
+eventTimeSignature : Decoder Midi.Event
+eventTimeSignature =
     bChar 0x58 *> bChar 0x04 *> (buildTimeSig <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8) <?> "time signature"
 
 
-parseKeySignature : Decoder Midi.Event
-parseKeySignature =
+eventKeySignature : Decoder Midi.Event
+eventKeySignature =
     bChar 0x59 *> bChar 0x02 *> (KeySignature <$> signedInt8 <*> uInt8)
 
 
-parseSequencerSpecific : Decoder Midi.Event
-parseSequencerSpecific =
+eventSequencerSpecific : Decoder Midi.Event
+eventSequencerSpecific =
     SequencerSpecific <$> parseMetaBytes 0x7F <?> "sequencer specific"
 
 
@@ -321,8 +321,8 @@ parseSequencerSpecific =
 In Web Midi a sysex event starts with a 0xF0 byte and ends with an EOX (0xF7) byte.
 There are also escaped SysEx messages, but these are only found in MIDI files.
 -}
-sysExEvent : Decoder Midi.Event
-sysExEvent =
+eventSysEx : Decoder Midi.Event
+eventSysEx =
     let
         eoxChar =
             fromCode eox
@@ -345,8 +345,8 @@ SysEx messages it must record the EOX byte as part of the SysEx message
 here as opposed to for SysEx MIDI events where that byte can be left
 implicit.
 -}
-fileSysExEvent : Decoder Midi.Event
-fileSysExEvent =
+eventFileSysExEvent : Decoder Midi.Event
+eventFileSysExEvent =
     let
         parseFlavour : Decoder SysExFlavour
         parseFlavour =
@@ -388,8 +388,8 @@ to cope with (ie ignore) unexpected values by examining the length and skipping 
 We cope by accepting any value here except TrackEnd which is the terminating condition for the list of MidiEvents
 and so must not be recognized here.
 -}
-parseUnspecified : Decoder Midi.Event
-parseUnspecified =
+eventUnspecified : Decoder Midi.Event
+eventUnspecified =
     Unspecified <$> notTrackEnd <*> (uInt8 >>= (\l -> count l uInt8))
 
 
@@ -404,38 +404,38 @@ trackEndMessage =
 -- Channel Parsers
 
 
-noteOn : Decoder Midi.Event
-noteOn =
+eventNoteOn : Decoder Midi.Event
+eventNoteOn =
     buildNote <$> bRange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
 
 
-noteOff : Decoder Midi.Event
-noteOff =
+eventNoteOff : Decoder Midi.Event
+eventNoteOff =
     buildNoteOff <$> bRange 0x80 0x8F <*> uInt8 <*> uInt8 <?> "note off"
 
 
-noteAfterTouch : Decoder Midi.Event
-noteAfterTouch =
+eventNoteAfterTouch : Decoder Midi.Event
+eventNoteAfterTouch =
     buildNoteAfterTouch <$> bRange 0xA0 0xAF <*> uInt8 <*> uInt8 <?> "note after touch"
 
 
-controlChange : Decoder Midi.Event
-controlChange =
+eventControlChange : Decoder Midi.Event
+eventControlChange =
     buildControlChange <$> bRange 0xB0 0xBF <*> uInt8 <*> uInt8 <?> "control change"
 
 
-programChange : Decoder Midi.Event
-programChange =
+eventProgramChange : Decoder Midi.Event
+eventProgramChange =
     buildProgramChange <$> bRange 0xC0 0xCF <*> uInt8 <?> "program change"
 
 
-channelAfterTouch : Decoder Midi.Event
-channelAfterTouch =
+eventChannelAfterTouch : Decoder Midi.Event
+eventChannelAfterTouch =
     buildChannelAfterTouch <$> bRange 0xD0 0xDF <*> uInt8 <?> "channel after touch"
 
 
-pitchBend : Decoder Midi.Event
-pitchBend =
+eventPitchBend : Decoder Midi.Event
+eventPitchBend =
     buildPitchBend <$> bRange 0xE0 0xEF <*> uInt8 <*> uInt8 <?> "pitch bend"
 
 
@@ -444,8 +444,8 @@ pitchBend =
 We now macro-expand the running status message to be the type (and use the channel status)
 of the parent. If the parent is missing or is not a channel event, we fail the parse.
 -}
-runningStatus : Maybe Midi.Event -> Decoder Midi.Event
-runningStatus parent =
+eventRunningStatus : Maybe Midi.Event -> Decoder Midi.Event
+eventRunningStatus parent =
     case parent of
         Just (NoteOn status _ _) ->
             NoteOn status <$> uInt8 <*> uInt8 <?> "note on running status"
