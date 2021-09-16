@@ -1,5 +1,6 @@
 module MidiTest exposing (..)
 
+import Bytes exposing (Bytes)
 import Char
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
@@ -129,17 +130,17 @@ generatePitchBend =
     Random.map2 Midi.PitchBend generateChannel (Random.int 0 16383)
 
 
-fuzzSysExByte : Fuzzer Byte
+fuzzSysExByte : Fuzzer Bytes
 fuzzSysExByte =
     Fuzz.intRange 0 127
 
 
-generateSysExByte : Random.Generator Byte
+generateSysExByte : Random.Generator Bytes
 generateSysExByte =
     Random.int 0 127
 
 
-generateByte : Random.Generator Byte
+generateByte : Random.Generator Bytes
 generateByte =
     Random.int 0 255
 
