@@ -31,15 +31,6 @@ varInt =
 
 
 
-{- just for debug purposes - consume the rest of the input -}
-
-
-rest : Parser (List Char)
-rest =
-    many anyChar
-
-
-
 -- top level parsers
 
 
