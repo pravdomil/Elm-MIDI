@@ -121,8 +121,8 @@ midiEvent : Maybe Midi.Event -> Decoder Midi.Event
 midiEvent parent =
     choice
         [ eventMeta
-        , eventNoteOn
         , eventNoteOff
+        , eventNoteOn
         , eventNoteAfterTouch
         , eventControlChange
         , eventProgramChange
@@ -339,14 +339,14 @@ trackEndMessage =
 -- Channel Parsers
 
 
-eventNoteOn : Decoder Midi.Event
-eventNoteOn =
-    buildNote <$> bRange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
-
-
 eventNoteOff : Decoder Midi.Event
 eventNoteOff =
     buildNoteOff <$> bRange 0x80 0x8F <*> uInt8 <*> uInt8 <?> "note off"
+
+
+eventNoteOn : Decoder Midi.Event
+eventNoteOn =
+    buildNote <$> bRange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
 
 
 eventNoteAfterTouch : Decoder Midi.Event
