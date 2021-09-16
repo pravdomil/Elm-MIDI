@@ -51,7 +51,7 @@ event event =
                 upper =
                     shiftRightBy 7 bend
             in
-                [ 0xE0 + channel, lower, upper ]
+            [ 0xE0 + channel, lower, upper ]
 
         _ ->
             Debug.crash "Unknown MIDI event."
@@ -63,7 +63,7 @@ recording : MidiRecording -> List Byte
 recording midi =
     case midi of
         SingleTrack ticksPerBeat t ->
-            (header 0 1 ticksPerBeat) ++ track t
+            header 0 1 ticksPerBeat ++ track t
 
         MultipleTracks tracksType ticksPerBeat ts ->
             let
@@ -75,7 +75,7 @@ recording midi =
                         Independent ->
                             2
             in
-                (header format (List.length ts) ticksPerBeat) ++ (List.concatMap track ts)
+            header format (List.length ts) ticksPerBeat ++ List.concatMap track ts
 
 
 
@@ -100,27 +100,27 @@ track t =
             [ 0x00, 0xFF, 0x2F, 0x00 ]
 
         encodedMsgs =
-            (List.concatMap midiMessage t) ++ endOfTrack
+            List.concatMap midiMessage t ++ endOfTrack
 
         len =
             List.length encodedMsgs
     in
-        (strToBytes "MTrk") ++ uint32 len ++ encodedMsgs
+    strToBytes "MTrk" ++ uint32 len ++ encodedMsgs
 
 
 midiMessage : MidiMessage -> List Byte
 midiMessage ( ticks, e ) =
-    (varInt ticks) ++ fileEvent e
+    varInt ticks ++ fileEvent e
 
 
 fileEvent : MidiEvent -> List Byte
 fileEvent e =
     case e of
         SysEx F0 bytes ->
-            0xF0 :: ((varInt (List.length bytes)) ++ bytes)
+            0xF0 :: (varInt (List.length bytes) ++ bytes)
 
         SysEx F7 bytes ->
-            0xF7 :: ((varInt (List.length bytes)) ++ bytes)
+            0xF7 :: (varInt (List.length bytes) ++ bytes)
 
         _ ->
             -- Use the regular event generator for everything else
@@ -133,7 +133,7 @@ fileEvent e =
 
 strToBytes : String -> List Byte
 strToBytes =
-    (List.map Char.toCode) << String.toList
+    List.map Char.toCode << String.toList
 
 
 uint16 : Int -> List Byte
@@ -145,7 +145,7 @@ uint16 x =
         b2 =
             Bitwise.and 255 x
     in
-        [ b1, b2 ]
+    [ b1, b2 ]
 
 
 uint32 : Int -> List Byte
@@ -163,7 +163,7 @@ uint32 x =
         b4 =
             Bitwise.and 255 x
     in
-        [ b1, b2, b3, b4 ]
+    [ b1, b2, b3, b4 ]
 
 
 varInt : Int -> List Byte
@@ -172,12 +172,14 @@ varInt x =
         varIntHelper x bytes =
             if x < 128 then
                 (x + 128) :: bytes
+
             else
                 varIntHelper
                     (shiftRightBy 7 x)
-                    ((128 + (Bitwise.and 127 x)) :: bytes)
+                    ((128 + Bitwise.and 127 x) :: bytes)
     in
-        if x < 128 then
-            [ x ]
-        else
-            varIntHelper (shiftRightBy 7 x) [ Bitwise.and 127 x ]
+    if x < 128 then
+        [ x ]
+
+    else
+        varIntHelper (shiftRightBy 7 x) [ Bitwise.and 127 x ]

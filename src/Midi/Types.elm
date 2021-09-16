@@ -1,19 +1,8 @@
-module Midi.Types
-    exposing
-        ( Track
-        , MidiEvent(..)
-        , MidiMessage
-        , TracksType(..)
-        , MidiRecording(..)
-        , Byte
-        , Channel
-        , Note
-        , Velocity
-        , SysExFlavour(..)
-        , Ticks
-        , eox
-        , validRecording
-        )
+module Midi.Types exposing
+    ( Track, MidiEvent(..), MidiMessage, TracksType(..), MidiRecording(..), Byte, Channel
+    , Note, Velocity, SysExFlavour(..), Ticks
+    , eox, validRecording
+    )
 
 {-| Type Definition of a MIDI recording
 
@@ -201,9 +190,9 @@ validRecording r =
                         _ ->
                             validTrack multipart ts
     in
-        case r of
-            SingleTrack _ t ->
-                validTrack False t
+    case r of
+        SingleTrack _ t ->
+            validTrack False t
 
-            MultipleTracks _ _ ts ->
-                all (validTrack False) ts
+        MultipleTracks _ _ ts ->
+            all (validTrack False) ts
