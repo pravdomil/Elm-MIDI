@@ -191,8 +191,8 @@ isValidRecording a =
                             validTrack multipart ts
     in
     case a of
-        SingleTrack _ t ->
-            validTrack False t
+        SingleTrack _ b ->
+            validTrack False b
 
-        MultipleTracks _ _ ts ->
-            all (validTrack False) ts
+        MultipleTracks _ _ b ->
+            all (validTrack False) b
