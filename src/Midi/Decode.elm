@@ -626,6 +626,20 @@ endianness =
     Bytes.BE
 
 
+decodeBlock : Int -> Decoder a -> Decoder a
+decodeBlock sizeOfDecoder decoder =
+    Decode.unsignedInt32 endianness
+        |> Decode.andThen
+            (\v ->
+                decoder
+                    |> Decode.andThen
+                        (\vv ->
+                            Decode.bytes (v - sizeOfDecoder)
+                                |> Decode.map (\_ -> vv)
+                        )
+            )
+
+
 decodeConst : String -> Decoder ()
 decodeConst a =
     Decode.string (String.length a)
