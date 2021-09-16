@@ -14,8 +14,8 @@ import Parser exposing (Parser)
 {- parse an 8 bit integer lying within a range -}
 
 
-brange : Int -> Int -> Parser Int
-brange l r =
+bRange : Int -> Int -> Parser Int
+bRange l r =
     let
         f a =
             toCode a >= l && toCode a <= r
@@ -492,7 +492,7 @@ trackEndMessage =
 
 noteOn : Parser MidiEvent
 noteOn =
-    buildNote <$> brange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
+    buildNote <$> bRange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
 
 
 
@@ -501,7 +501,7 @@ noteOn =
 
 noteOff : Parser MidiEvent
 noteOff =
-    buildNoteOff <$> brange 0x80 0x8F <*> uInt8 <*> uInt8 <?> "note off"
+    buildNoteOff <$> bRange 0x80 0x8F <*> uInt8 <*> uInt8 <?> "note off"
 
 
 
@@ -510,7 +510,7 @@ noteOff =
 
 noteAfterTouch : Parser MidiEvent
 noteAfterTouch =
-    buildNoteAfterTouch <$> brange 0xA0 0xAF <*> uInt8 <*> uInt8 <?> "note after touch"
+    buildNoteAfterTouch <$> bRange 0xA0 0xAF <*> uInt8 <*> uInt8 <?> "note after touch"
 
 
 
@@ -519,7 +519,7 @@ noteAfterTouch =
 
 controlChange : Parser MidiEvent
 controlChange =
-    buildControlChange <$> brange 0xB0 0xBF <*> uInt8 <*> uInt8 <?> "control change"
+    buildControlChange <$> bRange 0xB0 0xBF <*> uInt8 <*> uInt8 <?> "control change"
 
 
 
@@ -528,7 +528,7 @@ controlChange =
 
 programChange : Parser MidiEvent
 programChange =
-    buildProgramChange <$> brange 0xC0 0xCF <*> uInt8 <?> "program change"
+    buildProgramChange <$> bRange 0xC0 0xCF <*> uInt8 <?> "program change"
 
 
 
@@ -537,7 +537,7 @@ programChange =
 
 channelAfterTouch : Parser MidiEvent
 channelAfterTouch =
-    buildChannelAfterTouch <$> brange 0xD0 0xDF <*> uInt8 <?> "channel after touch"
+    buildChannelAfterTouch <$> bRange 0xD0 0xDF <*> uInt8 <?> "channel after touch"
 
 
 
@@ -546,7 +546,7 @@ channelAfterTouch =
 
 pitchBend : Parser MidiEvent
 pitchBend =
-    buildPitchBend <$> brange 0xE0 0xEF <*> uInt8 <*> uInt8 <?> "pitch bend"
+    buildPitchBend <$> bRange 0xE0 0xEF <*> uInt8 <*> uInt8 <?> "pitch bend"
 
 
 
