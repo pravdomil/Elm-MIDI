@@ -118,6 +118,10 @@ message parent =
     Decode.map2 Midi.Message varInt (eventDecoder parent)
 
 
+
+--
+
+
 eventDecoder : Maybe Midi.Message -> Decoder Midi.Event
 eventDecoder parent =
     Decode.unsignedInt8
