@@ -86,11 +86,11 @@ track a =
 {-| Encode MIDI message.
 -}
 message : Midi.Message -> Result Error Bytes
-message ( ticks, a ) =
-    event a
+message a =
+    event a.event
         |> Result.map
             (\v ->
-                [ varInt ticks
+                [ varInt a.delta
                 , Encode.bytes v
                 ]
                     |> Encode.sequence
