@@ -1,6 +1,6 @@
 module Midi exposing
     ( Recording(..), TrackType(..), Track
-    , Ticks, MidiEvent(..)
+    , Ticks, Event(..)
     , Channel, Note, Velocity, SysExFlavour(..)
     , endOfExclusive, isValidRecording
     , Message
@@ -13,7 +13,7 @@ module Midi exposing
 
 @docs Recording, TrackType, Track
 
-@docs MidiMessage, Ticks, MidiEvent
+@docs MidiMessage, Ticks, Event
 
 @docs Channel, Note, Velocity, SysExFlavour
 
@@ -52,7 +52,7 @@ type alias Track =
 {-| Midi message.
 -}
 type alias Message =
-    ( Ticks, MidiEvent )
+    ( Ticks, Event )
 
 
 {-| Midi tick (elapsed time).
@@ -67,7 +67,7 @@ Note that RunningStatus messages are not included within MidiEvent
 because the parser translates them to the underlying channel messages.
 
 -}
-type MidiEvent
+type Event
     = -- meta messages
       SequenceNumber Int
     | Text String
