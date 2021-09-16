@@ -15,10 +15,8 @@ midi =
         |> andThen midiTracks
 
 
-
-{- an internal representation of the header which includes the track count -}
-
-
+{-| An internal representation of the header which includes the track count.
+-}
 type alias Header =
     { formatType : Int
     , trackCount : Int
