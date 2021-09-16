@@ -1,9 +1,8 @@
 module Midi exposing
     ( Recording(..), TrackType(..), Track
-    , Ticks, Event(..)
+    , Message, Ticks, Event(..)
     , Channel, Note, Velocity, SysExFlavour(..)
     , endOfExclusive, isValidRecording
-    , Message
     )
 
 {-| Type definitions for MIDI.
@@ -13,7 +12,7 @@ module Midi exposing
 
 @docs Recording, TrackType, Track
 
-@docs MidiMessage, Ticks, Event
+@docs Message, Ticks, Event
 
 @docs Channel, Note, Velocity, SysExFlavour
 
