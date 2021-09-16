@@ -37,7 +37,7 @@ fileDecoder =
                 decodeBlock 6
                     (Decode.map3
                         (\v1 v2 v3 ->
-                            { trackType = v1
+                            { format = v1
                             , trackCount = v2
                             , tempo = v3
                             }
@@ -49,7 +49,7 @@ fileDecoder =
             )
         |> Decode.andThen
             (\v ->
-                case v.trackType of
+                case v.format of
                     0 ->
                         tracksDecoder v.trackCount |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
 
