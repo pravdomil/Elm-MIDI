@@ -12,50 +12,106 @@ import Bytes.Encode as Encode
 import Midi
 
 
+type Error
+    = NotSupported
+
+
 {-| Encode MIDI event.
 -}
-event : Midi.Event -> Bytes
+event : Midi.Event -> Result Error Bytes
 event a =
     (case a of
+        Midi.SequenceNumber _ ->
+            Err NotSupported
+
+        Midi.Text _ ->
+            Err NotSupported
+
+        Midi.Copyright _ ->
+            Err NotSupported
+
+        Midi.TrackName _ ->
+            Err NotSupported
+
+        Midi.InstrumentName _ ->
+            Err NotSupported
+
+        Midi.Lyrics _ ->
+            Err NotSupported
+
+        Midi.Marker _ ->
+            Err NotSupported
+
+        Midi.CuePoint _ ->
+            Err NotSupported
+
+        Midi.ChannelPrefix _ ->
+            Err NotSupported
+
+        Midi.Tempo _ ->
+            Err NotSupported
+
+        Midi.SMPTEOffset _ _ _ _ _ ->
+            Err NotSupported
+
+        Midi.TimeSignature _ _ _ _ ->
+            Err NotSupported
+
+        Midi.KeySignature _ _ ->
+            Err NotSupported
+
+        Midi.SequencerSpecific _ ->
+            Err NotSupported
+
         Midi.SysEx bytes ->
-            [ Encode.unsignedInt8 0xF0
-            , Encode.bytes bytes
-            , Encode.unsignedInt8 0xF7
-            ]
+            Ok
+                [ Encode.unsignedInt8 0xF0
+                , Encode.bytes bytes
+                , Encode.unsignedInt8 0xF7
+                ]
+
+        Midi.Unspecified _ _ ->
+            Err NotSupported
 
         Midi.NoteOn channel note velocity ->
-            [ Encode.unsignedInt8 (0x90 + channel)
-            , Encode.unsignedInt8 note
-            , Encode.unsignedInt8 velocity
-            ]
+            Ok
+                [ Encode.unsignedInt8 (0x90 + channel)
+                , Encode.unsignedInt8 note
+                , Encode.unsignedInt8 velocity
+                ]
 
         Midi.NoteOff channel note velocity ->
-            [ Encode.unsignedInt8 (0x80 + channel)
-            , Encode.unsignedInt8 note
-            , Encode.unsignedInt8 velocity
-            ]
+            Ok
+                [ Encode.unsignedInt8 (0x80 + channel)
+                , Encode.unsignedInt8 note
+                , Encode.unsignedInt8 velocity
+                ]
 
         Midi.NoteAfterTouch channel note velocity ->
-            [ Encode.unsignedInt8 (0xA0 + channel)
-            , Encode.unsignedInt8 note
-            , Encode.unsignedInt8 velocity
-            ]
+            Ok
+                [ Encode.unsignedInt8 (0xA0 + channel)
+                , Encode.unsignedInt8 note
+                , Encode.unsignedInt8 velocity
+                ]
 
         Midi.ControlChange channel controllerNumber value ->
-            [ Encode.unsignedInt8 (0xB0 + channel)
-            , Encode.unsignedInt8 controllerNumber
-            , Encode.unsignedInt8 value
-            ]
+            Ok
+                [ Encode.unsignedInt8 (0xB0 + channel)
+                , Encode.unsignedInt8 controllerNumber
+                , Encode.unsignedInt8 value
+                ]
 
         Midi.ProgramChange channel value ->
-            [ Encode.unsignedInt8 (0xC0 + channel)
-            , Encode.unsignedInt8 value
-            ]
+            Ok
+                [ Encode.unsignedInt8 (0xC0 + channel)
+                , Encode.unsignedInt8 value
+                ]
 
         Midi.ChannelAfterTouch channel velocity ->
-            [ Encode.unsignedInt8 (0xD0 + channel)
-            , Encode.unsignedInt8 velocity
-            ]
+            Ok
+                [ Encode.unsignedInt8 (0xD0 + channel)
+                , Encode.unsignedInt8 velocity
+                ]
 
         Midi.PitchBend channel bend ->
             let
@@ -67,13 +123,13 @@ event a =
                 upper =
                     Bitwise.shiftRightBy 7 bend
             in
-            [ Encode.unsignedInt8 (0xE0 + channel)
-            , Encode.unsignedInt8 lower
-            , Encode.unsignedInt8 upper
-            ]
+            Ok
+                [ Encode.unsignedInt8 (0xE0 + channel)
+                , Encode.unsignedInt8 lower
+                , Encode.unsignedInt8 upper
+                ]
     )
-        |> Encode.sequence
-        |> Encode.encode
+        |> Result.map (Encode.sequence >> Encode.encode)
 
 
 {-| Generate a MIDI recording
