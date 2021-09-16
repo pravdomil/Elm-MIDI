@@ -61,7 +61,7 @@ type alias Message =
     }
 
 
-{-| MIDI tick (elapsed time).
+{-| MIDI ticks.
 -}
 type alias Ticks =
     Int
