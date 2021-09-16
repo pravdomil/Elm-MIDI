@@ -9,16 +9,7 @@ module Midi.Parse exposing (normalise, file, event)
 
 -}
 
-import Bitwise exposing (..)
-import Char exposing (fromCode, toCode)
-import Combine exposing (..)
-import Combine.Char exposing (..)
-import Debug exposing (..)
-import Maybe exposing (withDefault)
-import Midi.Types exposing (..)
-import Result exposing (Result)
-import String exposing (fromList, toList)
-import Tuple exposing (first, second)
+import Parser exposing (Parser)
 
 
 
@@ -26,7 +17,7 @@ import Tuple exposing (first, second)
 {- parse a binary 8 bit integer -}
 
 
-int8 : Parser s Int
+int8 : Parser Int
 int8 =
     toCode <$> anyChar
 
@@ -35,7 +26,7 @@ int8 =
 {- parse a signed binary 8 bit integer -}
 
 
-signedInt8 : Parser s Int
+signedInt8 : Parser Int
 signedInt8 =
     (\i ->
         if i > 127 then
@@ -51,7 +42,7 @@ signedInt8 =
 {- parse a specific binary 8 bit integer -}
 
 
-bchar : Int -> Parser s Int
+bchar : Int -> Parser Int
 bchar val =
     toCode <$> char (fromCode val)
 
@@ -61,7 +52,7 @@ bchar val =
 {- parse an 8 bit integer lying within a range -}
 
 
-brange : Int -> Int -> Parser s Int
+brange : Int -> Int -> Parser Int
 brange l r =
     let
         f a =
@@ -74,12 +65,12 @@ brange l r =
 {- parse a choice between a pair of 8 bit integers -}
 
 
-bchoice : Int -> Int -> Parser s Int
+bchoice : Int -> Int -> Parser Int
 bchoice x y =
     bchar x <|> bchar y
 
 
-notTrackEnd : Parser s Int
+notTrackEnd : Parser Int
 notTrackEnd =
     let
         c =
@@ -92,7 +83,7 @@ notTrackEnd =
 -- fixed length integers
 
 
-uint16 : Parser s Int
+uint16 : Parser Int
 uint16 =
     let
         toInt16 a b =
@@ -101,7 +92,7 @@ uint16 =
     toInt16 <$> int8 <*> int8
 
 
-uint24 : Parser s Int
+uint24 : Parser Int
 uint24 =
     let
         toInt24 a b c =
@@ -110,7 +101,7 @@ uint24 =
     toInt24 <$> int8 <*> int8 <*> int8
 
 
-uint32 : Parser s Int
+uint32 : Parser Int
 uint32 =
     let
         toUint32 a b c d =
@@ -123,7 +114,7 @@ uint32 =
 -- variable length integers
 
 
-varIntHelper : Parser s (List Int)
+varIntHelper : Parser (List Int)
 varIntHelper =
     int8
         >>= (\n ->
@@ -135,7 +126,7 @@ varIntHelper =
             )
 
 
-varInt : Parser s Int
+varInt : Parser Int
 varInt =
     List.foldl (\n -> \acc -> shiftLeftBy 7 acc + n) 0 <$> varIntHelper
 
@@ -144,7 +135,7 @@ varInt =
 {- just for debug purposes - consume the rest of the input -}
 
 
-rest : Parser s (List Char)
+rest : Parser (List Char)
 rest =
     many anyChar
 
@@ -153,7 +144,7 @@ rest =
 -- top level parsers
 
 
-midi : Parser s MidiRecording
+midi : Parser MidiRecording
 midi =
     midiHeader
         |> andThen midiTracks
@@ -174,7 +165,7 @@ type alias Header =
 {- parser for headers which quietly eats any extra bytes if we have a non-standard chunk size -}
 
 
-midiHeader : Parser s Header
+midiHeader : Parser Header
 midiHeader =
     string "MThd"
         *> (let
@@ -186,7 +177,7 @@ midiHeader =
            )
 
 
-midiTracks : Header -> Parser s MidiRecording
+midiTracks : Header -> Parser MidiRecording
 midiTracks h =
     case h.formatType of
         0 ->
@@ -214,12 +205,12 @@ midiTracks h =
 -}
 
 
-midiTrack : Parser s Track
+midiTrack : Parser Track
 midiTrack =
     string "MTrk" *> uint32 *> midiMessages Nothing <?> "midi track"
 
 
-midiMessages : Maybe MidiEvent -> Parser s (List MidiMessage)
+midiMessages : Maybe MidiEvent -> Parser (List MidiMessage)
 midiMessages parent =
     midiMessage parent
         >>= continueOrNot
@@ -231,7 +222,7 @@ midiMessages parent =
 -}
 
 
-continueOrNot : ( Ticks, Maybe MidiEvent ) -> Parser s (List MidiMessage)
+continueOrNot : ( Ticks, Maybe MidiEvent ) -> Parser (List MidiMessage)
 continueOrNot maybeLastMessage =
     case maybeLastMessage of
         ( ticks, Just lastEvent ) ->
@@ -242,7 +233,7 @@ continueOrNot maybeLastMessage =
             succeed []
 
 
-midiMessage : Maybe MidiEvent -> Parser s ( Ticks, Maybe MidiEvent )
+midiMessage : Maybe MidiEvent -> Parser ( Ticks, Maybe MidiEvent )
 midiMessage parent =
     (,)
         <$> varInt
@@ -256,7 +247,7 @@ midiMessage parent =
 -}
 
 
-midiEvent : Maybe MidiEvent -> Parser s MidiEvent
+midiEvent : Maybe MidiEvent -> Parser MidiEvent
 midiEvent parent =
     choice
         [ metaEvent
@@ -272,7 +263,7 @@ midiEvent parent =
         <?> "midi event"
 
 
-midiFileEvent : Maybe MidiEvent -> Parser s (Maybe MidiEvent)
+midiFileEvent : Maybe MidiEvent -> Parser (Maybe MidiEvent)
 midiFileEvent parent =
     choice
         [ metaFileEvent
@@ -293,7 +284,7 @@ midiFileEvent parent =
 -- metadata parsers
 
 
-metaEvent : Parser s MidiEvent
+metaEvent : Parser MidiEvent
 metaEvent =
     bchar 0xFF
         *> choice
@@ -316,7 +307,7 @@ metaEvent =
         <?> "meta event"
 
 
-metaFileEvent : Parser s (Maybe MidiEvent)
+metaFileEvent : Parser (Maybe MidiEvent)
 metaFileEvent =
     bchar 0xFF
         *> choice
@@ -340,12 +331,12 @@ metaFileEvent =
         <?> "meta event"
 
 
-parseEndOfTrack : Parser s (Maybe MidiEvent)
+parseEndOfTrack : Parser (Maybe MidiEvent)
 parseEndOfTrack =
     bchar 0x2F *> bchar 0x00 *> succeed Nothing <?> "sequence number"
 
 
-parseSequenceNumber : Parser s MidiEvent
+parseSequenceNumber : Parser MidiEvent
 parseSequenceNumber =
     SequenceNumber <$> (bchar 0x00 *> bchar 0x02 *> uint16 <?> "sequence number")
 
@@ -354,7 +345,7 @@ parseSequenceNumber =
 {- parse a simple string-valued meta event -}
 
 
-parseMetaString : Int -> Parser s String
+parseMetaString : Int -> Parser String
 parseMetaString target =
     String.fromList
         -- <$> (bchar target *> varInt `andThen` (\l -> count l anyChar))
@@ -365,13 +356,13 @@ parseMetaString target =
 {- parse a meta event valued as a List of Bytes (masquerading as Ints) -}
 
 
-parseMetaBytes : Int -> Parser s (List Byte)
+parseMetaBytes : Int -> Parser (List Byte)
 parseMetaBytes target =
     List.map toCode
         <$> (bchar target *> varInt >>= (\l -> count l anyChar))
 
 
-parseText : Parser s MidiEvent
+parseText : Parser MidiEvent
 parseText =
     Text <$> parseMetaString 0x01 <?> "text"
 
@@ -380,12 +371,12 @@ parseText =
 -- parseText = log "text" <$> (Text <$> parseMetaString 0x01 <?> "text" )
 
 
-parseCopyright : Parser s MidiEvent
+parseCopyright : Parser MidiEvent
 parseCopyright =
     Copyright <$> parseMetaString 0x02 <?> "copyright"
 
 
-parseTrackName : Parser s MidiEvent
+parseTrackName : Parser MidiEvent
 parseTrackName =
     TrackName <$> parseMetaString 0x03 <?> "track name"
 
@@ -397,52 +388,52 @@ parseTrackName =
 -}
 
 
-parseInstrumentName : Parser s MidiEvent
+parseInstrumentName : Parser MidiEvent
 parseInstrumentName =
     InstrumentName <$> parseMetaString 0x04 <?> "instrument name"
 
 
-parseLyrics : Parser s MidiEvent
+parseLyrics : Parser MidiEvent
 parseLyrics =
     Lyrics <$> parseMetaString 0x05 <?> "lyrics"
 
 
-parseMarker : Parser s MidiEvent
+parseMarker : Parser MidiEvent
 parseMarker =
     Marker <$> parseMetaString 0x06 <?> "marker"
 
 
-parseCuePoint : Parser s MidiEvent
+parseCuePoint : Parser MidiEvent
 parseCuePoint =
     CuePoint <$> parseMetaString 0x07 <?> "cue point"
 
 
-parseChannelPrefix : Parser s MidiEvent
+parseChannelPrefix : Parser MidiEvent
 parseChannelPrefix =
     ChannelPrefix <$> (bchar 0x20 *> bchar 0x01 *> int8 <?> "channel prefix")
 
 
-parseTempoChange : Parser s MidiEvent
+parseTempoChange : Parser MidiEvent
 parseTempoChange =
     Tempo <$> (bchar 0x51 *> bchar 0x03 *> uint24) <?> "tempo change"
 
 
-parseSMPTEOffset : Parser s MidiEvent
+parseSMPTEOffset : Parser MidiEvent
 parseSMPTEOffset =
     bchar 0x54 *> bchar 0x03 *> (SMPTEOffset <$> int8 <*> int8 <*> int8 <*> int8 <*> int8 <?> "SMTPE offset")
 
 
-parseTimeSignature : Parser s MidiEvent
+parseTimeSignature : Parser MidiEvent
 parseTimeSignature =
     bchar 0x58 *> bchar 0x04 *> (buildTimeSig <$> int8 <*> int8 <*> int8 <*> int8) <?> "time signature"
 
 
-parseKeySignature : Parser s MidiEvent
+parseKeySignature : Parser MidiEvent
 parseKeySignature =
     bchar 0x59 *> bchar 0x02 *> (KeySignature <$> signedInt8 <*> int8)
 
 
-parseSequencerSpecific : Parser s MidiEvent
+parseSequencerSpecific : Parser MidiEvent
 parseSequencerSpecific =
     SequencerSpecific <$> parseMetaBytes 0x7F <?> "sequencer specific"
 
@@ -454,7 +445,7 @@ parseSequencerSpecific =
 -}
 
 
-sysExEvent : Parser s MidiEvent
+sysExEvent : Parser MidiEvent
 sysExEvent =
     let
         eoxChar =
@@ -481,18 +472,18 @@ sysExEvent =
 -}
 
 
-fileSysExEvent : Parser s MidiEvent
+fileSysExEvent : Parser MidiEvent
 fileSysExEvent =
     let
-        parseFlavour : Parser s SysExFlavour
+        parseFlavour : Parser SysExFlavour
         parseFlavour =
             (bchar 0xF0 $> F0) <|> (bchar 0xF7 $> F7) <?> "sysex flavour"
 
-        sysexData : Parser s Char
+        sysexData : Parser Char
         sysexData =
             satisfy (\c -> toCode c < 128)
 
-        parseUnescapedSysex : Parser s MidiEvent
+        parseUnescapedSysex : Parser MidiEvent
         parseUnescapedSysex =
             SysEx
                 <$> (bchar 0xF0 $> F0)
@@ -503,7 +494,7 @@ fileSysExEvent =
                     )
                 <?> "unescaped system exclusive"
 
-        parseEscapedSysex : Parser s MidiEvent
+        parseEscapedSysex : Parser MidiEvent
         parseEscapedSysex =
             SysEx
                 <$> (bchar 0xF7 $> F7)
@@ -527,7 +518,7 @@ fileSysExEvent =
 -}
 
 
-parseUnspecified : Parser s MidiEvent
+parseUnspecified : Parser MidiEvent
 parseUnspecified =
     Unspecified <$> notTrackEnd <*> (int8 >>= (\l -> count l int8))
 
@@ -536,7 +527,7 @@ parseUnspecified =
 {- parse an entire Track End message - not simply the event -}
 
 
-trackEndMessage : Parser s ()
+trackEndMessage : Parser ()
 trackEndMessage =
     varInt *> bchar 0xFF *> bchar 0x2F *> bchar 0x00 *> succeed () <?> "track end"
 
@@ -546,7 +537,7 @@ trackEndMessage =
 -- channel parsers
 
 
-noteOn : Parser s MidiEvent
+noteOn : Parser MidiEvent
 noteOn =
     buildNote <$> brange 0x90 0x9F <*> int8 <*> int8 <?> "note on"
 
@@ -555,7 +546,7 @@ noteOn =
 -- noteOn = log "note on" <$> ( buildNote <$> brange 0x90 0x9F <*> int8 <*> int8 <?> "note on" )
 
 
-noteOff : Parser s MidiEvent
+noteOff : Parser MidiEvent
 noteOff =
     buildNoteOff <$> brange 0x80 0x8F <*> int8 <*> int8 <?> "note off"
 
@@ -564,7 +555,7 @@ noteOff =
 -- noteOff = log "note off" <$> ( buildNoteOff <$> brange 0x80 0x8F <*> int8 <*> int8 <?> "note off" )
 
 
-noteAfterTouch : Parser s MidiEvent
+noteAfterTouch : Parser MidiEvent
 noteAfterTouch =
     buildNoteAfterTouch <$> brange 0xA0 0xAF <*> int8 <*> int8 <?> "note after touch"
 
@@ -573,7 +564,7 @@ noteAfterTouch =
 -- noteAfterTouch = log "note afterTouch" <$> ( buildNoteAfterTouch <$> brange 0xA0 0xAF <*> int8 <*> int8 <?> "note after touch" )
 
 
-controlChange : Parser s MidiEvent
+controlChange : Parser MidiEvent
 controlChange =
     buildControlChange <$> brange 0xB0 0xBF <*> int8 <*> int8 <?> "control change"
 
@@ -582,7 +573,7 @@ controlChange =
 -- controlChange = log "control change" <$> ( buildControlChange <$> brange 0xB0 0xBF <*> int8 <*> int8 <?> "control change" )
 
 
-programChange : Parser s MidiEvent
+programChange : Parser MidiEvent
 programChange =
     buildProgramChange <$> brange 0xC0 0xCF <*> int8 <?> "program change"
 
@@ -591,7 +582,7 @@ programChange =
 -- programChange = log "program change" <$> ( buildProgramChange <$> brange 0xC0 0xCF <*> int8 <?> "program change" )
 
 
-channelAfterTouch : Parser s MidiEvent
+channelAfterTouch : Parser MidiEvent
 channelAfterTouch =
     buildChannelAfterTouch <$> brange 0xD0 0xDF <*> int8 <?> "channel after touch"
 
@@ -600,7 +591,7 @@ channelAfterTouch =
 -- channelAfterTouch = log "channel afterTouch" <$> ( buildChannelAfterTouch <$> brange 0xD0 0xDF <*> int8 <?> "channel after touch")
 
 
-pitchBend : Parser s MidiEvent
+pitchBend : Parser MidiEvent
 pitchBend =
     buildPitchBend <$> brange 0xE0 0xEF <*> int8 <*> int8 <?> "pitch bend"
 
@@ -613,7 +604,7 @@ pitchBend =
 -}
 
 
-runningStatus : Maybe MidiEvent -> Parser s MidiEvent
+runningStatus : Maybe MidiEvent -> Parser MidiEvent
 runningStatus parent =
     case parent of
         Just (NoteOn status _ _) ->
@@ -773,7 +764,7 @@ buildTimeSig nn dd cc bb =
 -}
 
 
-consumeOverspill : Parser s ( Int, a ) -> Int -> Parser s a
+consumeOverspill : Parser ( Int, a ) -> Int -> Parser a
 consumeOverspill actual expected =
     actual
         >>= (\( cnt, rest ) ->
