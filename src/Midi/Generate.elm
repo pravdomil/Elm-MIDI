@@ -9,43 +9,46 @@ module Midi.Generate exposing (event, recording)
 
 -}
 
+import Bitwise
+import Midi
+
 
 {-| Generate a MIDI event
 -}
-event : MidiEvent -> List Byte
+event : Midi.Event -> List Int
 event a =
     case a of
-        SysEx F0 bytes ->
-            0xF0 :: (bytes ++ [ eox ])
+        Midi.SysEx Midi.F0 bytes ->
+            0xF0 :: (bytes ++ [ Midi.endOfExclusive ])
 
-        SysEx F7 bytes ->
+        Midi.SysEx Midi.F7 bytes ->
             Debug.crash "WebMIDI SysEx events should all be of the 0xF0 flavor."
 
-        NoteOn channel note velocity ->
+        Midi.NoteOn channel note velocity ->
             [ 0x90 + channel, note, velocity ]
 
-        NoteOff channel note velocity ->
+        Midi.NoteOff channel note velocity ->
             [ 0x80 + channel, note, velocity ]
 
-        NoteAfterTouch channel note velocity ->
+        Midi.NoteAfterTouch channel note velocity ->
             [ 0xA0 + channel, note, velocity ]
 
-        ControlChange channel controllerNumber value ->
+        Midi.ControlChange channel controllerNumber value ->
             [ 0xB0 + channel, controllerNumber, value ]
 
-        ProgramChange channel value ->
+        Midi.ProgramChange channel value ->
             [ 0xC0 + channel, value ]
 
-        ChannelAfterTouch channel velocity ->
+        Midi.ChannelAfterTouch channel velocity ->
             [ 0xD0 + channel, velocity ]
 
-        PitchBend channel bend ->
+        Midi.PitchBend channel bend ->
             let
                 lower =
                     Bitwise.and bend 127
 
                 upper =
-                    shiftRightBy 7 bend
+                    Bitwise.shiftRightBy 7 bend
             in
             [ 0xE0 + channel, lower, upper ]
 
@@ -55,7 +58,7 @@ event a =
 
 {-| Generate a MIDI recording
 -}
-recording : MidiRecording -> List Byte
+recording : Midi.Recording -> List Int
 recording midi =
     case midi of
         SingleTrack ticksPerBeat t ->
@@ -65,10 +68,10 @@ recording midi =
             let
                 format =
                     case tracksType of
-                        Simultaneous ->
+                        Midi.Simultaneous ->
                             1
 
-                        Independent ->
+                        Midi.Independent ->
                             2
             in
             header format (List.length ts) ticksPerBeat ++ List.concatMap track ts
@@ -78,7 +81,7 @@ recording midi =
 -- Lower level generators
 
 
-header : Int -> Int -> Int -> List Byte
+header : Int -> Int -> Int -> List Int
 header format numTracks ticksPerBeat =
     List.concat
         [ strToBytes "MThd"
@@ -89,7 +92,7 @@ header format numTracks ticksPerBeat =
         ]
 
 
-track : Track -> List Byte
+track : Midi.Track -> List Int
 track t =
     let
         endOfTrack =
@@ -104,18 +107,18 @@ track t =
     strToBytes "MTrk" ++ uint32 len ++ encodedMsgs
 
 
-midiMessage : MidiMessage -> List Byte
+midiMessage : Midi.Message -> List Int
 midiMessage ( ticks, e ) =
     varInt ticks ++ fileEvent e
 
 
-fileEvent : MidiEvent -> List Byte
+fileEvent : Midi.Event -> List Int
 fileEvent e =
     case e of
-        SysEx F0 bytes ->
+        Midi.SysEx Midi.F0 bytes ->
             0xF0 :: (varInt (List.length bytes) ++ bytes)
 
-        SysEx F7 bytes ->
+        Midi.SysEx Midi.F7 bytes ->
             0xF7 :: (varInt (List.length bytes) ++ bytes)
 
         _ ->
@@ -127,16 +130,16 @@ fileEvent e =
 -- Helper functions
 
 
-strToBytes : String -> List Byte
+strToBytes : String -> List Int
 strToBytes =
     List.map Char.toCode << String.toList
 
 
-uint16 : Int -> List Byte
+uint16 : Int -> List Int
 uint16 x =
     let
         b1 =
-            Bitwise.and 255 (shiftRightBy 8 x)
+            Bitwise.and 255 (Bitwise.shiftRightBy 8 x)
 
         b2 =
             Bitwise.and 255 x
@@ -144,17 +147,17 @@ uint16 x =
     [ b1, b2 ]
 
 
-uint32 : Int -> List Byte
+uint32 : Int -> List Int
 uint32 x =
     let
         b1 =
-            Bitwise.and 255 (shiftRightBy 24 x)
+            Bitwise.and 255 (Bitwise.shiftRightBy 24 x)
 
         b2 =
-            Bitwise.and 255 (shiftRightBy 16 x)
+            Bitwise.and 255 (Bitwise.shiftRightBy 16 x)
 
         b3 =
-            Bitwise.and 255 (shiftRightBy 8 x)
+            Bitwise.and 255 (Bitwise.shiftRightBy 8 x)
 
         b4 =
             Bitwise.and 255 x
@@ -162,7 +165,7 @@ uint32 x =
     [ b1, b2, b3, b4 ]
 
 
-varInt : Int -> List Byte
+varInt : Int -> List Int
 varInt x =
     let
         varIntHelper x bytes =
@@ -171,11 +174,11 @@ varInt x =
 
             else
                 varIntHelper
-                    (shiftRightBy 7 x)
+                    (Bitwise.shiftRightBy 7 x)
                     ((128 + Bitwise.and 127 x) :: bytes)
     in
     if x < 128 then
         [ x ]
 
     else
-        varIntHelper (shiftRightBy 7 x) [ Bitwise.and 127 x ]
+        varIntHelper (Bitwise.shiftRightBy 7 x) [ Bitwise.and 127 x ]
