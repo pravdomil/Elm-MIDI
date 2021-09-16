@@ -10,15 +10,6 @@ import Parser exposing (Parser)
 
 
 
-{- parse a specific binary 8 bit integer -}
-
-
-bChar : Int -> Parser Int
-bChar val =
-    toCode <$> char (fromCode val)
-
-
-
 -- bchar val = log "bchar" <$> ( toCode <$> char (fromCode(val)))
 {- parse an 8 bit integer lying within a range -}
 
@@ -30,15 +21,6 @@ brange l r =
             toCode a >= l && toCode a <= r
     in
     toCode <$> satisfy f
-
-
-
-{- parse a choice between a pair of 8 bit integers -}
-
-
-bchoice : Int -> Int -> Parser Int
-bchoice x y =
-    bChar x <|> bChar y
 
 
 notTrackEnd : Parser Int
