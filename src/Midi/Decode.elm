@@ -162,38 +162,71 @@ eventDecoder parent =
 
 metaEvent : Decoder Midi.Event
 metaEvent =
-    bChar 0xFF
-        *> choice
-            [ eventSequenceNumber
-            , eventText
-            , eventCopyright
-            , eventTrackName
-            , eventInstrumentName
-            , eventLyrics
-            , eventMarker
-            , eventCuePoint
-            , eventChannelPrefix
-            , eventTempoChange
-            , eventSMPTEOffset
-            , eventTimeSignature
-            , eventKeySignature
-            , eventSequencerSpecific
-            , eventEndOfTrack
-            , eventUnspecified
-            ]
+    Decode.unsignedInt8
+        |> Decode.andThen
+            (\v ->
+                case v of
+                    0x00 ->
+                        sequenceNumberEvent
+
+                    0x01 ->
+                        textEvent
+
+                    0x02 ->
+                        copyrightEvent
+
+                    0x03 ->
+                        trackNameEvent
+
+                    0x04 ->
+                        instrumentNameEvent
+
+                    0x05 ->
+                        lyricsEvent
+
+                    0x06 ->
+                        markerEvent
+
+                    0x07 ->
+                        cuePointEvent
+
+                    0x20 ->
+                        channelPrefixEvent
+
+                    0x2F ->
+                        endOfTrackEvent
+
+                    0x51 ->
+                        tempoEvent
+
+                    0x54 ->
+                        smpteOffsetEvent
+
+                    0x58 ->
+                        timeSignatureEvent
+
+                    0x59 ->
+                        keySignatureEvent
+
+                    0x7F ->
+                        sequencerSpecificEvent
+
+                    _ ->
+                        unknownEvent
+            )
 
 
 
 --
 
 
-eventEndOfTrack : Decoder (Maybe Midi.Event)
-eventEndOfTrack =
+endOfTrackEvent : Decoder Midi.Event
+endOfTrackEvent =
     bChar 0x2F *> bChar 0x00 *> succeed Nothing <?> "sequence number"
 
 
-eventSequenceNumber : Decoder Midi.Event
-eventSequenceNumber =
+sequenceNumberEvent : Decoder Midi.Event
+sequenceNumberEvent =
     SequenceNumber <$> (bChar 0x00 *> bChar 0x02 *> uInt16 <?> "sequence number")
 
 
@@ -214,68 +247,68 @@ parseMetaBytes target =
         <$> (bChar target *> varInt >>= (\l -> count l anyChar))
 
 
-eventText : Decoder Midi.Event
-eventText =
+textEvent : Decoder Midi.Event
+textEvent =
     Text <$> parseMetaString 0x01 <?> "text"
 
 
-eventCopyright : Decoder Midi.Event
-eventCopyright =
+copyrightEvent : Decoder Midi.Event
+copyrightEvent =
     Copyright <$> parseMetaString 0x02 <?> "copyright"
 
 
-eventTrackName : Decoder Midi.Event
-eventTrackName =
+trackNameEvent : Decoder Midi.Event
+trackNameEvent =
     TrackName <$> parseMetaString 0x03 <?> "track name"
 
 
-eventInstrumentName : Decoder Midi.Event
-eventInstrumentName =
+instrumentNameEvent : Decoder Midi.Event
+instrumentNameEvent =
     InstrumentName <$> parseMetaString 0x04 <?> "instrument name"
 
 
-eventLyrics : Decoder Midi.Event
-eventLyrics =
+lyricsEvent : Decoder Midi.Event
+lyricsEvent =
     Lyrics <$> parseMetaString 0x05 <?> "lyrics"
 
 
-eventMarker : Decoder Midi.Event
-eventMarker =
+markerEvent : Decoder Midi.Event
+markerEvent =
     Marker <$> parseMetaString 0x06 <?> "marker"
 
 
-eventCuePoint : Decoder Midi.Event
-eventCuePoint =
+cuePointEvent : Decoder Midi.Event
+cuePointEvent =
     CuePoint <$> parseMetaString 0x07 <?> "cue point"
 
 
-eventChannelPrefix : Decoder Midi.Event
-eventChannelPrefix =
+channelPrefixEvent : Decoder Midi.Event
+channelPrefixEvent =
     ChannelPrefix <$> (bChar 0x20 *> bChar 0x01 *> uInt8 <?> "channel prefix")
 
 
-eventTempoChange : Decoder Midi.Event
-eventTempoChange =
+tempoEvent : Decoder Midi.Event
+tempoEvent =
     Tempo <$> (bChar 0x51 *> bChar 0x03 *> uInt24) <?> "tempo change"
 
 
-eventSMPTEOffset : Decoder Midi.Event
-eventSMPTEOffset =
+smpteOffsetEvent : Decoder Midi.Event
+smpteOffsetEvent =
     bChar 0x54 *> bChar 0x03 *> (SMPTEOffset <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <?> "SMTPE offset")
 
 
-eventTimeSignature : Decoder Midi.Event
-eventTimeSignature =
+timeSignatureEvent : Decoder Midi.Event
+timeSignatureEvent =
     bChar 0x58 *> bChar 0x04 *> (buildTimeSig <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8) <?> "time signature"
 
 
-eventKeySignature : Decoder Midi.Event
-eventKeySignature =
+keySignatureEvent : Decoder Midi.Event
+keySignatureEvent =
     bChar 0x59 *> bChar 0x02 *> (KeySignature <$> signedInt8 <*> uInt8)
 
 
-eventSequencerSpecific : Decoder Midi.Event
-eventSequencerSpecific =
+sequencerSpecificEvent : Decoder Midi.Event
+sequencerSpecificEvent =
     SequencerSpecific <$> parseMetaBytes 0x7F <?> "sequencer specific"
 
 
@@ -350,8 +383,8 @@ to cope with (ie ignore) unexpected values by examining the length and skipping 
 We cope by accepting any value here except TrackEnd which is the terminating condition for the list of MidiEvents
 and so must not be recognized here.
 -}
-eventUnspecified : Decoder Midi.Event
-eventUnspecified =
+unknownEvent : Decoder Midi.Event
+unknownEvent =
     Unspecified <$> notTrackEnd <*> (uInt8 >>= (\l -> count l uInt8))
 
 
