@@ -6,6 +6,7 @@ module Midi.Decode exposing (file, event)
 
 -}
 
+import Bitwise
 import Bytes exposing (Bytes)
 import Bytes.Decode as Decode exposing (Decoder)
 import Midi
@@ -22,7 +23,7 @@ file a =
 -}
 event : Bytes -> Maybe Midi.Event
 event a =
-    Decode.decode (midiEvent Nothing) a
+    Decode.decode (eventDecoder Nothing) a
 
 
 
@@ -114,27 +115,49 @@ messages =
 
 message : Maybe Midi.Message -> Decoder Midi.Message
 message parent =
-    Decode.map2 Midi.Message varInt (midiEvent parent)
+    Decode.map2 Midi.Message varInt (eventDecoder parent)
 
 
-midiEvent : Maybe Midi.Event -> Decoder Midi.Event
-midiEvent parent =
-    choice
-        [ eventMeta
-        , eventNoteOff
-        , eventNoteOn
-        , eventNoteAfterTouch
-        , eventControlChange
-        , eventProgramChange
-        , eventChannelAfterTouch
-        , eventPitchBend
-        , eventFileSysExEvent
-        , eventRunningStatus parent
-        ]
+eventDecoder : Maybe Midi.Message -> Decoder Midi.Event
+eventDecoder parent =
+    Decode.unsignedInt8
+        |> Decode.andThen
+            (\v ->
+                case ( v, bitwiseClear 0x0F v ) of
+                    ( 0xFF, _ ) ->
+                        metaEvent
+
+                    ( 0xF0, _ ) ->
+                        sysExEvent
+
+                    ( _, 0x80 ) ->
+                        noteOffEvent
+
+                    ( _, 0x90 ) ->
+                        noteOnEvent
+
+                    ( _, 0xA0 ) ->
+                        noteAfterTouchEvent
+
+                    ( _, 0xB0 ) ->
+                        controlChangeEvent
+
+                    ( _, 0xC0 ) ->
+                        programChangeEvent
+
+                    ( _, 0xD0 ) ->
+                        channelAfterTouchEvent
+
+                    ( _, 0xE0 ) ->
+                        pitchBendEvent
+
+                    _ ->
+                        runningStatusEvent (Maybe.map .event parent)
+            )
 
 
-eventMeta : Decoder (Maybe Midi.Event)
-eventMeta =
+metaEvent : Decoder Midi.Event
+metaEvent =
     bChar 0xFF
         *> choice
             [ eventSequenceNumber
@@ -256,8 +279,8 @@ eventSequencerSpecific =
 In Web Midi a sysex event starts with a 0xF0 byte and ends with an EOX (0xF7) byte.
 There are also escaped SysEx messages, but these are only found in MIDI files.
 -}
-eventSysEx : Decoder Midi.Event
-eventSysEx =
+sysExEvent : Decoder Midi.Event
+sysExEvent =
     let
         eoxChar =
             fromCode eox
@@ -339,38 +362,38 @@ trackEndMessage =
 -- Channel Parsers
 
 
-eventNoteOff : Decoder Midi.Event
-eventNoteOff =
+noteOffEvent : Decoder Midi.Event
+noteOffEvent =
     buildNoteOff <$> bRange 0x80 0x8F <*> uInt8 <*> uInt8 <?> "note off"
 
 
-eventNoteOn : Decoder Midi.Event
-eventNoteOn =
+noteOnEvent : Decoder Midi.Event
+noteOnEvent =
     buildNote <$> bRange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
 
 
-eventNoteAfterTouch : Decoder Midi.Event
-eventNoteAfterTouch =
+noteAfterTouchEvent : Decoder Midi.Event
+noteAfterTouchEvent =
     buildNoteAfterTouch <$> bRange 0xA0 0xAF <*> uInt8 <*> uInt8 <?> "note after touch"
 
 
-eventControlChange : Decoder Midi.Event
-eventControlChange =
+controlChangeEvent : Decoder Midi.Event
+controlChangeEvent =
     buildControlChange <$> bRange 0xB0 0xBF <*> uInt8 <*> uInt8 <?> "control change"
 
 
-eventProgramChange : Decoder Midi.Event
-eventProgramChange =
+programChangeEvent : Decoder Midi.Event
+programChangeEvent =
     buildProgramChange <$> bRange 0xC0 0xCF <*> uInt8 <?> "program change"
 
 
-eventChannelAfterTouch : Decoder Midi.Event
-eventChannelAfterTouch =
+channelAfterTouchEvent : Decoder Midi.Event
+channelAfterTouchEvent =
     buildChannelAfterTouch <$> bRange 0xD0 0xDF <*> uInt8 <?> "channel after touch"
 
 
-eventPitchBend : Decoder Midi.Event
-eventPitchBend =
+pitchBendEvent : Decoder Midi.Event
+pitchBendEvent =
     buildPitchBend <$> bRange 0xE0 0xEF <*> uInt8 <*> uInt8 <?> "pitch bend"
 
 
@@ -379,8 +402,8 @@ eventPitchBend =
 We now macro-expand the running status message to be the type (and use the channel status)
 of the parent. If the parent is missing or is not a channel event, we fail the parse.
 -}
-eventRunningStatus : Maybe Midi.Event -> Decoder Midi.Event
-eventRunningStatus parent =
+runningStatusEvent : Maybe Midi.Event -> Decoder Midi.Event
+runningStatusEvent parent =
     case parent of
         Just (NoteOn status _ _) ->
             NoteOn status <$> uInt8 <*> uInt8 <?> "note on running status"
@@ -571,6 +594,11 @@ notTrackEnd =
 
 
 -- Helpers
+
+
+bitwiseClear : Int -> Int -> Int
+bitwiseClear mask a =
+    Bitwise.and (Bitwise.complement mask) a
 
 
 endianness : Bytes.Endianness
