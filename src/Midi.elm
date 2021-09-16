@@ -72,7 +72,7 @@ because the parser translates them to the underlying channel messages.
 
 -}
 type Event
-    = -- meta messages
+    = -- Meta
       SequenceNumber Int
     | Text String
     | Copyright String
@@ -89,7 +89,7 @@ type Event
     | SequencerSpecific (List Int)
     | SysEx Bytes
     | Unspecified Int (List Int)
-      -- channel messages
+      -- Control
     | NoteOn Channel Note Velocity
     | NoteOff Channel Note Velocity
     | NoteAfterTouch Channel Note Velocity
