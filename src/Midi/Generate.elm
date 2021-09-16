@@ -9,10 +9,6 @@ module Midi.Generate exposing (event, recording)
 
 -}
 
-import Bitwise exposing (shiftRightBy)
-import Char
-import Midi.Types exposing (..)
-
 
 {-| Generate a MIDI event
 -}
