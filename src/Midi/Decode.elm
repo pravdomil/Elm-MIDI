@@ -13,8 +13,8 @@ import Parser exposing (Parser)
 -- fixed length integers
 
 
-uint16 : Parser Int
-uint16 =
+uInt16 : Parser Int
+uInt16 =
     let
         toInt16 a b =
             shiftLeftBy 8 a + b
@@ -22,8 +22,8 @@ uint16 =
     toInt16 <$> uInt8 <*> uInt8
 
 
-uint24 : Parser Int
-uint24 =
+uInt24 : Parser Int
+uInt24 =
     let
         toInt24 a b c =
             shiftLeftBy 16 a + shiftLeftBy 8 b + c
@@ -31,8 +31,8 @@ uint24 =
     toInt24 <$> uInt8 <*> uInt8 <*> uInt8
 
 
-uint32 : Parser Int
-uint32 =
+uInt32 : Parser Int
+uInt32 =
     let
         toUint32 a b c d =
             shiftLeftBy 24 a + shiftLeftBy 16 b + shiftLeftBy 8 c + d
@@ -100,7 +100,7 @@ midiHeader =
     string "MThd"
         *> (let
                 h =
-                    headerChunk <$> uint32 <*> uint16 <*> uint16 <*> uint16
+                    headerChunk <$> uInt32 <*> uInt16 <*> uInt16 <*> uInt16
             in
             consumeOverspill h 6
                 <?> "header"
@@ -137,7 +137,7 @@ midiTracks h =
 
 midiTrack : Parser Track
 midiTrack =
-    string "MTrk" *> uint32 *> midiMessages Nothing <?> "midi track"
+    string "MTrk" *> uInt32 *> midiMessages Nothing <?> "midi track"
 
 
 midiMessages : Maybe MidiEvent -> Parser (List MidiMessage)
@@ -268,7 +268,7 @@ parseEndOfTrack =
 
 parseSequenceNumber : Parser MidiEvent
 parseSequenceNumber =
-    SequenceNumber <$> (bChar 0x00 *> bChar 0x02 *> uint16 <?> "sequence number")
+    SequenceNumber <$> (bChar 0x00 *> bChar 0x02 *> uInt16 <?> "sequence number")
 
 
 
@@ -345,7 +345,7 @@ parseChannelPrefix =
 
 parseTempoChange : Parser MidiEvent
 parseTempoChange =
-    Tempo <$> (bChar 0x51 *> bChar 0x03 *> uint24) <?> "tempo change"
+    Tempo <$> (bChar 0x51 *> bChar 0x03 *> uInt24) <?> "tempo change"
 
 
 parseSMPTEOffset : Parser MidiEvent
