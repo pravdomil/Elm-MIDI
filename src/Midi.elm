@@ -149,6 +149,7 @@ Verifies multipart sysex messages.
 isValidRecording : MidiRecording -> Bool
 isValidRecording a =
     let
+        validTrack : Bool -> List MidiMessage -> Bool
         validTrack multipart b =
             case b of
                 -- All multipart messages must be finished.
