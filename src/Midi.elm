@@ -14,7 +14,7 @@ module Midi exposing
 @docs Note, Velocity, SysExFlavour, Ticks
 
 
-# Functions
+# Helpers
 
 @docs eox, validRecording
 
@@ -128,6 +128,14 @@ type MidiRecording
     | MultipleTracks TracksType Int (List Track)
 
 
+{-|
+
+
+# Helpers
+
+-}
+
+
 {-| Constants
 -}
 eox : Int
@@ -135,16 +143,9 @@ eox =
     0xF7
 
 
-{-| Helpers
+{-| Returns true if a MidiRecording is valid.
+Currently this involves verifying multipart sysex messages are broken up correctly.
 -}
-
-
-
-{- Returns true if a MidiRecording is valid.
-   Currently this involves verifying multipart sysex messages are broken up correctly.
--}
-
-
 validRecording : MidiRecording -> Bool
 validRecording r =
     let
