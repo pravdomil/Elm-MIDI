@@ -1,8 +1,8 @@
-module Midi.Encode exposing (event, recording)
+module Midi.Encode exposing (recording, track, message, event)
 
 {-| Module for encoding MIDI.
 
-@docs event, recording
+@docs recording, track, message, event
 
 -}
 
@@ -13,7 +13,89 @@ import Midi
 
 
 type Error
-    = NotSupported
+    = NotSupported String
+
+
+{-| Encode MIDI recording.
+-}
+recording : Midi.Recording -> Result Error Bytes
+recording a =
+    let
+        trackType : Int
+        trackType =
+            case a.trackType of
+                Midi.Simultaneous ->
+                    1
+
+                Midi.Independent ->
+                    2
+
+        encodedTracks : Result Error (List Encode.Encoder)
+        encodedTracks =
+            (Tuple.first a.tracks :: Tuple.second a.tracks)
+                |> List.map (track >> Result.map Encode.bytes)
+                |> resultSequence
+    in
+    encodedTracks
+        |> Result.map
+            (\v ->
+                [ Encode.string "MThd"
+                , Encode.unsignedInt32 endianness 6
+                , Encode.unsignedInt16 endianness trackType
+                , Encode.unsignedInt16 endianness (List.length v)
+                , Encode.unsignedInt16 endianness a.tempo
+                , Encode.sequence v
+                ]
+                    |> Encode.sequence
+                    |> Encode.encode
+            )
+
+
+{-| Encode MIDI track.
+-}
+track : Midi.Track -> Result Error Bytes
+track a =
+    let
+        encodedMsgs : Result Error (List Encode.Encoder)
+        encodedMsgs =
+            a
+                |> List.map (message >> Result.map Encode.bytes)
+                |> resultSequence
+                |> Result.map
+                    (\v ->
+                        [ Encode.sequence v
+                        , Encode.unsignedInt8 0x00
+                        , Encode.unsignedInt8 0xFF
+                        , Encode.unsignedInt8 0x2F
+                        , Encode.unsignedInt8 0x00
+                        ]
+                    )
+    in
+    encodedMsgs
+        |> Result.map
+            (\v ->
+                [ Encode.string "MTrk"
+                , Encode.unsignedInt32 endianness (List.length v)
+                , Encode.sequence v
+                ]
+                    |> Encode.sequence
+                    |> Encode.encode
+            )
+
+
+{-| Encode MIDI message.
+-}
+message : Midi.Message -> Result Error Bytes
+message ( ticks, a ) =
+    event a
+        |> Result.map
+            (\v ->
+                [ varInt ticks
+                , Encode.bytes v
+                ]
+                    |> Encode.sequence
+                    |> Encode.encode
+            )
 
 
 {-| Encode MIDI event.
@@ -22,46 +104,46 @@ event : Midi.Event -> Result Error Bytes
 event a =
     (case a of
         Midi.SequenceNumber _ ->
-            Err NotSupported
+            Err (NotSupported "SequenceNumber")
 
         Midi.Text _ ->
-            Err NotSupported
+            Err (NotSupported "Text")
 
         Midi.Copyright _ ->
-            Err NotSupported
+            Err (NotSupported "Copyright")
 
         Midi.TrackName _ ->
-            Err NotSupported
+            Err (NotSupported "TrackName")
 
         Midi.InstrumentName _ ->
-            Err NotSupported
+            Err (NotSupported "InstrumentName")
 
         Midi.Lyrics _ ->
-            Err NotSupported
+            Err (NotSupported "Lyrics")
 
         Midi.Marker _ ->
-            Err NotSupported
+            Err (NotSupported "Marker")
 
         Midi.CuePoint _ ->
-            Err NotSupported
+            Err (NotSupported "CuePoint")
 
         Midi.ChannelPrefix _ ->
-            Err NotSupported
+            Err (NotSupported "ChannelPrefix")
 
         Midi.Tempo _ ->
-            Err NotSupported
+            Err (NotSupported "Tempo")
 
         Midi.SMPTEOffset _ _ _ _ _ ->
-            Err NotSupported
+            Err (NotSupported "SMPTEOffset")
 
         Midi.TimeSignature _ _ _ _ ->
-            Err NotSupported
+            Err (NotSupported "TimeSignature")
 
         Midi.KeySignature _ _ ->
-            Err NotSupported
+            Err (NotSupported "KeySignature")
 
         Midi.SequencerSpecific _ ->
-            Err NotSupported
+            Err (NotSupported "SequencerSpecific")
 
         Midi.SysEx bytes ->
             Ok
@@ -71,7 +153,7 @@ event a =
                 ]
 
         Midi.Unspecified _ _ ->
-            Err NotSupported
+            Err (NotSupported "Unspecified")
 
         Midi.NoteOn channel note velocity ->
             Ok
@@ -132,94 +214,34 @@ event a =
         |> Result.map (Encode.sequence >> Encode.encode)
 
 
-{-| Generate a MIDI recording
--}
-recording : Midi.Recording -> List Int
-recording midi =
-    case midi of
-        SingleTrack ticksPerBeat t ->
-            header 0 1 ticksPerBeat ++ track t
-
-        MultipleTracks tracksType ticksPerBeat ts ->
-            let
-                format =
-                    case tracksType of
-                        Midi.Simultaneous ->
-                            1
-
-                        Midi.Independent ->
-                            2
-            in
-            header format (List.length ts) ticksPerBeat ++ List.concatMap track ts
-
-
-
--- Lower level generators
-
-
-header : Int -> Int -> Int -> List Int
-header format numTracks ticksPerBeat =
-    List.concat
-        [ strToBytes "MThd"
-        , uint32 6
-        , uint16 format
-        , uint16 numTracks
-        , uint16 ticksPerBeat
-        ]
-
-
-track : Midi.Track -> List Int
-track t =
-    let
-        endOfTrack =
-            [ 0x00, 0xFF, 0x2F, 0x00 ]
-
-        encodedMsgs =
-            List.concatMap midiMessage t ++ endOfTrack
-
-        len =
-            List.length encodedMsgs
-    in
-    strToBytes "MTrk" ++ uint32 len ++ encodedMsgs
-
-
-midiMessage : Midi.Message -> List Int
-midiMessage ( ticks, e ) =
-    varInt ticks ++ fileEvent e
-
-
-fileEvent : Midi.Event -> List Int
-fileEvent e =
-    case e of
-        Midi.SysEx Midi.F0 bytes ->
-            0xF0 :: (varInt (List.length bytes) ++ bytes)
-
-        Midi.SysEx Midi.F7 bytes ->
-            0xF7 :: (varInt (List.length bytes) ++ bytes)
-
-        _ ->
-            -- Use the regular event generator for everything else
-            event e
-
-
 
 -- Helpers
 
 
-varInt : Int -> List Int
-varInt x =
+endianness : Bytes.Endianness
+endianness =
+    Bytes.BE
+
+
+varInt : Int -> Encode.Encoder
+varInt a =
     let
-        varIntHelper x bytes =
-            if x < 128 then
-                (x + 128) :: bytes
+        varIntHelper b bytes =
+            if b < 128 then
+                (b + 128) :: bytes
 
             else
                 varIntHelper
-                    (Bitwise.shiftRightBy 7 x)
-                    ((128 + Bitwise.and 127 x) :: bytes)
+                    (Bitwise.shiftRightBy 7 b)
+                    ((128 + Bitwise.and 127 b) :: bytes)
     in
-    if x < 128 then
-        [ x ]
+    if a < 128 then
+        [ a ]
 
     else
-        varIntHelper (Bitwise.shiftRightBy 7 x) [ Bitwise.and 127 x ]
+        varIntHelper (Bitwise.shiftRightBy 7 a) [ Bitwise.and 127 a ]
+
+
+resultSequence : List (Result x a) -> Result x (List a)
+resultSequence a =
+    List.foldr (Result.map2 (::)) (Ok []) a
