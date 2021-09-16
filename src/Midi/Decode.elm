@@ -61,12 +61,9 @@ midiTracks h =
             fail ("Unknown MIDI file format " ++ toString f)
 
 
-
-{- we pass Nothing to midiMessages because the very first message
-   has no parent (antecedent)
+{-| We pass Nothing to midiMessages because the very first message
+has no parent (antecedent).
 -}
-
-
 midiTrack : Parser Track
 midiTrack =
     string "MTrk" *> uInt32 *> midiMessages Nothing <?> "midi track"
@@ -78,12 +75,9 @@ midiMessages parent =
         >>= continueOrNot
 
 
-
-{- Keep reading unless we just saw an End of Track message
-   which would cause us to get Nothing passed in here
+{-| Keep reading unless we just saw an End of Track message
+which would cause us to get Nothing passed in here.
 -}
-
-
 continueOrNot : ( Ticks, Maybe Midi.Event ) -> Parser (List MidiMessage)
 continueOrNot maybeLastMessage =
     case maybeLastMessage of
@@ -103,12 +97,9 @@ midiMessage parent =
         <?> "midi message"
 
 
-
-{- we need to pass the parent event to running status events in order to
-   make sense of them.
+{-| We need to pass the parent event to running status events in order to
+make sense of them.
 -}
-
-
 midiEvent : Maybe Midi.Event -> Parser Midi.Event
 midiEvent parent =
     choice
@@ -143,7 +134,7 @@ midiFileEvent parent =
 
 
 
--- metadata parsers
+-- Metadata
 
 
 metaEvent : Parser Midi.Event
@@ -203,10 +194,8 @@ parseSequenceNumber =
     SequenceNumber <$> (bChar 0x00 *> bChar 0x02 *> uInt16 <?> "sequence number")
 
 
-
-{- parse a simple string-valued meta event -}
-
-
+{-| Parse a simple string-valued meta event.
+-}
 parseMetaString : Int -> Parser String
 parseMetaString target =
     String.fromList
@@ -214,10 +203,8 @@ parseMetaString target =
         <$> (bChar target *> varInt >>= (\l -> count l anyChar))
 
 
-
-{- parse a meta event valued as a List of Bytes (masquerading as Ints) -}
-
-
+{-| Parse a meta event valued as a List of Bytes (masquerading as Ints).
+-}
 parseMetaBytes : Int -> Parser (List Byte)
 parseMetaBytes target =
     List.map toCode
@@ -229,10 +216,6 @@ parseText =
     Text <$> parseMetaString 0x01 <?> "text"
 
 
-
--- parseText = log "text" <$> (Text <$> parseMetaString 0x01 <?> "text" )
-
-
 parseCopyright : Parser Midi.Event
 parseCopyright =
     Copyright <$> parseMetaString 0x02 <?> "copyright"
@@ -241,13 +224,6 @@ parseCopyright =
 parseTrackName : Parser Midi.Event
 parseTrackName =
     TrackName <$> parseMetaString 0x03 <?> "track name"
-
-
-
-{-
-   parseTrackName =
-       log "track name" <$> (TrackName <$> parseMetaString 0x03 <?> "track name")
--}
 
 
 parseInstrumentName : Parser Midi.Event
@@ -300,13 +276,10 @@ parseSequencerSpecific =
     SequencerSpecific <$> parseMetaBytes 0x7F <?> "sequencer specific"
 
 
-
-{- A SysEx event is introduced by an 0xF0 byte and is followed by an array of bytes.
-   In Web Midi a sysex event starts with a 0xF0 byte and ends with an EOX (0xF7) byte.
-   There are also escaped SysEx messages, but these are only found in MIDI files.
+{-| A SysEx event is introduced by an 0xF0 byte and is followed by an array of bytes.
+In Web Midi a sysex event starts with a 0xF0 byte and ends with an EOX (0xF7) byte.
+There are also escaped SysEx messages, but these are only found in MIDI files.
 -}
-
-
 sysExEvent : Parser Midi.Event
 sysExEvent =
     let
@@ -322,18 +295,15 @@ sysExEvent =
         <?> "system exclusive"
 
 
-
-{- A SysEx event in a file is introduced by an 0xF0 or 0xF7 byte, followed by a
-   variable length integer that denotes how many data bytes follow.
-   If it starts with 0xF0 the data bytes must be valid sysex data, however if it
-   starts with 0xF7 any data may follow.
-   Note: Since this library doesn't do anything special to handle multi-part
-   SysEx messages it must record the EOX byte as part of the SysEx message
-   here as opposed to for SysEx MIDI events where that byte can be left
-   implicit.
+{-| A SysEx event in a file is introduced by an 0xF0 or 0xF7 byte, followed by a
+variable length integer that denotes how many data bytes follow.
+If it starts with 0xF0 the data bytes must be valid sysex data, however if it
+starts with 0xF7 any data may follow.
+Note: Since this library doesn't do anything special to handle multi-part
+SysEx messages it must record the EOX byte as part of the SysEx message
+here as opposed to for SysEx MIDI events where that byte can be left
+implicit.
 -}
-
-
 fileSysExEvent : Parser Midi.Event
 fileSysExEvent =
     let
@@ -371,32 +341,26 @@ fileSysExEvent =
         <?> "system exclusive (MIDI file)"
 
 
-
-{- parse an unspecified meta event
-   The possible range for the type is 00-7F. Not all values in this range are defined, but programs must be able
-   to cope with (ie ignore) unexpected values by examining the length and skipping over the data portion.
-   We cope by accepting any value here except TrackEnd which is the terminating condition for the list of MidiEvents
-   and so must not be recognized here
+{-| Parse an unspecified meta event.
+The possible range for the type is 00-7F. Not all values in this range are defined, but programs must be able
+to cope with (ie ignore) unexpected values by examining the length and skipping over the data portion.
+We cope by accepting any value here except TrackEnd which is the terminating condition for the list of MidiEvents
+and so must not be recognized here.
 -}
-
-
 parseUnspecified : Parser Midi.Event
 parseUnspecified =
     Unspecified <$> notTrackEnd <*> (uInt8 >>= (\l -> count l uInt8))
 
 
-
-{- parse an entire Track End message - not simply the event -}
-
-
+{-| Parse an entire Track End message - not simply the event.
+-}
 trackEndMessage : Parser ()
 trackEndMessage =
     varInt *> bChar 0xFF *> bChar 0x2F *> bChar 0x00 *> succeed () <?> "track end"
 
 
 
--- trackEndMessage =   log "track end" <$>  (varInt *> bchar 0xFF *> bchar 0x2F *> bchar 0x00 *> succeed () <?> "track end" )
--- channel parsers
+-- Channel Parsers
 
 
 noteOn : Parser Midi.Event
@@ -404,17 +368,9 @@ noteOn =
     buildNote <$> bRange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
 
 
-
--- noteOn = log "note on" <$> ( buildNote <$> brange 0x90 0x9F <*> int8 <*> int8 <?> "note on" )
-
-
 noteOff : Parser Midi.Event
 noteOff =
     buildNoteOff <$> bRange 0x80 0x8F <*> uInt8 <*> uInt8 <?> "note off"
-
-
-
--- noteOff = log "note off" <$> ( buildNoteOff <$> brange 0x80 0x8F <*> int8 <*> int8 <?> "note off" )
 
 
 noteAfterTouch : Parser Midi.Event
@@ -422,17 +378,9 @@ noteAfterTouch =
     buildNoteAfterTouch <$> bRange 0xA0 0xAF <*> uInt8 <*> uInt8 <?> "note after touch"
 
 
-
--- noteAfterTouch = log "note afterTouch" <$> ( buildNoteAfterTouch <$> brange 0xA0 0xAF <*> int8 <*> int8 <?> "note after touch" )
-
-
 controlChange : Parser Midi.Event
 controlChange =
     buildControlChange <$> bRange 0xB0 0xBF <*> uInt8 <*> uInt8 <?> "control change"
-
-
-
--- controlChange = log "control change" <$> ( buildControlChange <$> brange 0xB0 0xBF <*> int8 <*> int8 <?> "control change" )
 
 
 programChange : Parser Midi.Event
@@ -440,17 +388,9 @@ programChange =
     buildProgramChange <$> bRange 0xC0 0xCF <*> uInt8 <?> "program change"
 
 
-
--- programChange = log "program change" <$> ( buildProgramChange <$> brange 0xC0 0xCF <*> int8 <?> "program change" )
-
-
 channelAfterTouch : Parser Midi.Event
 channelAfterTouch =
     buildChannelAfterTouch <$> bRange 0xD0 0xDF <*> uInt8 <?> "channel after touch"
-
-
-
--- channelAfterTouch = log "channel afterTouch" <$> ( buildChannelAfterTouch <$> brange 0xD0 0xDF <*> int8 <?> "channel after touch")
 
 
 pitchBend : Parser Midi.Event
@@ -458,14 +398,11 @@ pitchBend =
     buildPitchBend <$> bRange 0xE0 0xEF <*> uInt8 <*> uInt8 <?> "pitch bend"
 
 
-
-{- running status is somewhat anomalous.  It inherits the 'type' of the last event parsed,
-   (here called the parent) which must be a channel event.
-   We now macro-expand the running status message to be the type (and use the channel status)
-   of the parent.  If the parent is missing or is not a channel event, we fail the parse
+{-| Running status is somewhat anomalous. It inherits the 'type' of the last event parsed,
+(here called the parent) which must be a channel event.
+We now macro-expand the running status message to be the type (and use the channel status)
+of the parent. If the parent is missing or is not a channel event, we fail the parse.
 -}
-
-
 runningStatus : Maybe Midi.Event -> Parser Midi.Event
 runningStatus parent =
     case parent of
@@ -502,10 +439,8 @@ headerChunk l a b c =
     ( l, Header a b c )
 
 
-
-{- build NoteOn (unless the velocity is zero in which case NoteOff) -}
-
-
+{-| Build NoteOn (unless the velocity is zero in which case NoteOff).
+-}
 buildNote : Int -> Int -> Int -> Midi.Event
 buildNote cmd note velocity =
     let
@@ -524,10 +459,8 @@ buildNote cmd note velocity =
             NoteOn channel note velocity
 
 
-
-{- abstract builders that construct MidiEvents that all have the same shape -}
-
-
+{-| Abstract builders that construct MidiEvents that all have the same shape.
+-}
 channelBuilder3 : (Int -> Int -> Int -> Midi.Event) -> Int -> Int -> Int -> Midi.Event
 channelBuilder3 construct cmd x y =
     let
@@ -548,37 +481,29 @@ channelBuilder2 construct cmd x =
     construct channel x
 
 
-
-{- build NoteOff -}
-
-
+{-| Build NoteOff.
+-}
 buildNoteOff : Int -> Int -> Int -> Midi.Event
 buildNoteOff cmd note velocity =
     channelBuilder3 NoteOff cmd note velocity
 
 
-
-{- build Note AfterTouch AKA Polyphonic Key Pressure -}
-
-
+{-| Build Note AfterTouch AKA Polyphonic Key Pressure.
+-}
 buildNoteAfterTouch : Int -> Int -> Int -> Midi.Event
 buildNoteAfterTouch cmd note pressure =
     channelBuilder3 NoteAfterTouch cmd note pressure
 
 
-
-{- build Control Change -}
-
-
+{-| Build Control Change.
+-}
 buildControlChange : Int -> Int -> Int -> Midi.Event
 buildControlChange cmd num value =
     channelBuilder3 ControlChange cmd num value
 
 
-
-{- build Program Change -}
-
-
+{-| Build Program Change.
+-}
 buildProgramChange : Int -> Int -> Midi.Event
 buildProgramChange cmd num =
     channelBuilder2 ProgramChange
@@ -586,28 +511,22 @@ buildProgramChange cmd num =
         num
 
 
-
-{- build Channel AfterTouch AKA Channel Key Pressure -}
-
-
+{-| Build Channel AfterTouch AKA Channel Key Pressure.
+-}
 buildChannelAfterTouch : Int -> Int -> Midi.Event
 buildChannelAfterTouch cmd num =
     channelBuilder2 ChannelAfterTouch cmd num
 
 
-
-{- build Pitch Bend -}
-
-
+{-| Build Pitch Bend.
+-}
 buildPitchBend : Int -> Int -> Int -> Midi.Event
 buildPitchBend cmd lsb msb =
     channelBuilder2 PitchBend cmd <| lsb + shiftLeftBy 7 msb
 
 
-
-{- build a Time Signature -}
-
-
+{-| Build a Time Signature.
+-}
 buildTimeSig : Int -> Int -> Int -> Int -> Midi.Event
 buildTimeSig nn dd cc bb =
     let
@@ -618,14 +537,14 @@ buildTimeSig nn dd cc bb =
 
 
 
--- utility functions
-{- consume the overspill from a non-standard size chunk
-   actual is the parsed actual chunk size followed by the chunk contents (which are returned)
-   expected is the expected size of the chunk
-   consume the rest if the difference suggests an overspill of unwanted chunk material
+-- Helpers
+
+
+{-| Consume the overspill from a non-standard size chunk.
+Actual is the parsed actual chunk size followed by the chunk contents (which are returned).
+Expected is the expected size of the chunk.
+Consume the rest if the difference suggests an overspill of unwanted chunk material.
 -}
-
-
 consumeOverspill : Parser ( Int, a ) -> Int -> Parser a
 consumeOverspill actual expected =
     actual
@@ -642,10 +561,10 @@ makeTuple a b =
 
 
 
--- exported functions
+-- Exported Functions
 
 
-{-| Parse a MIDI event
+{-| Parse a MIDI event.
 -}
 event : String -> Result String Midi.Event
 event s =
@@ -657,7 +576,7 @@ event s =
             Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
 
 
-{-| entry point - Parse a normalised MIDI file image
+{-| Parse a normalised MIDI file image.
 -}
 file : String -> Result String MidiRecording
 file s =
