@@ -1,5 +1,5 @@
 module Midi exposing
-    ( Recording, TrackType(..), Track
+    ( File, TrackType(..), Track
     , Message, Ticks, Event(..)
     , Channel, Note, Velocity
     )
@@ -9,7 +9,7 @@ module Midi exposing
 
 # Types
 
-@docs Recording, TrackType, Track
+@docs File, TrackType, Track
 
 @docs Message, Ticks, Event
 
@@ -20,9 +20,9 @@ module Midi exposing
 import Bytes exposing (Bytes)
 
 
-{-| MIDI recording.
+{-| A MIDI file.
 -}
-type alias Recording =
+type alias File =
     { tempo : TicksPerBeat
     , trackType : TrackType
     , tracks : ( Track, List Track )

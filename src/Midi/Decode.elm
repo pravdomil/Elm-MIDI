@@ -6,15 +6,16 @@ module Midi.Decode exposing (file, event, normalise)
 
 -}
 
+import Bytes exposing (Bytes)
 import Bytes.Decode as Decode exposing (Decoder)
 import Midi
 
 
-{-| Parse a normalised MIDI file image.
+{-| Decode MIDI file.
 -}
-file : String -> Result String MidiRecording
+file : Bytes -> Result String Midi.File
 file s =
-    case Combine.parse midi s of
+    case Combine.parse fileDecoder s of
         Ok ( _, _, n ) ->
             Ok n
 
@@ -51,8 +52,8 @@ normalise =
 --
 
 
-midi : Decoder Midi.Recording
-midi =
+fileDecoder : Decoder Midi.File
+fileDecoder =
     midiHeader
         |> andThen midiTracks
 

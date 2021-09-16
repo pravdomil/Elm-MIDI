@@ -1,8 +1,8 @@
-module Midi.Encode exposing (recording, track, message, event)
+module Midi.Encode exposing (file, track, message, event)
 
 {-| Module for encoding MIDI.
 
-@docs recording, track, message, event
+@docs file, track, message, event
 
 -}
 
@@ -16,10 +16,10 @@ type Error
     = NotSupported String
 
 
-{-| Encode MIDI recording.
+{-| Encode MIDI file.
 -}
-recording : Midi.Recording -> Result Error Bytes
-recording a =
+file : Midi.File -> Result Error Bytes
+file a =
     let
         trackType : Int
         trackType =
