@@ -159,14 +159,14 @@ eventMeta =
             , Just <$> eventTimeSignature
             , Just <$> eventKeySignature
             , Just <$> eventSequencerSpecific
-            , parseEndOfTrack
+            , eventEndOfTrack
             , Just <$> eventUnspecified
             ]
         <?> "meta event"
 
 
-parseEndOfTrack : Decoder (Maybe Midi.Event)
-parseEndOfTrack =
+eventEndOfTrack : Decoder (Maybe Midi.Event)
+eventEndOfTrack =
     bChar 0x2F *> bChar 0x00 *> succeed Nothing <?> "sequence number"
 
 
