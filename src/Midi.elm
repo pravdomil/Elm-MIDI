@@ -17,6 +17,7 @@ module Midi exposing
 
 -}
 
+import Bytes exposing (Bytes)
 
 
 {-| MIDI recording.
@@ -86,7 +87,7 @@ type Event
     | TimeSignature Int Int Int Int
     | KeySignature Int Int
     | SequencerSpecific (List Int)
-    | SysEx (List Int)
+    | SysEx Bytes
     | Unspecified Int (List Int)
       -- channel messages
     | NoteOn Channel Note Velocity
