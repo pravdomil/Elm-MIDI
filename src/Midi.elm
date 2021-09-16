@@ -87,8 +87,8 @@ type Event
     | SysEx Bytes
     | Unspecified Int (List Int)
       -- Control
-    | NoteOn Channel Note Velocity
     | NoteOff Channel Note Velocity
+    | NoteOn Channel Note Velocity
     | NoteAfterTouch Channel Note Velocity
     | ControlChange Channel Int Int
     | ProgramChange Channel Int
