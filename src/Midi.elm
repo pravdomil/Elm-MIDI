@@ -1,23 +1,25 @@
 module Midi exposing
     ( MidiRecording(..), TracksType(..), Track
     , MidiMessage, Ticks, MidiEvent(..)
-    , Note, Velocity, SysExFlavour(..)
-    , Channel, endOfExclusive, isValidRecording
+    , Channel, Note, Velocity, SysExFlavour(..)
+    , endOfExclusive, isValidRecording
     )
 
 {-| Type definitions for MIDI.
 
 
-# Data Types
+# Types
 
-@docs Track, MidiEvent, MidiMessage, TracksType, MidiRecording, Byte, Channel
+@docs MidiRecording, TracksType, Track
 
-@docs Note, Velocity, SysExFlavour, Ticks
+@docs MidiMessage, Ticks, MidiEvent
+
+@docs Channel, Note, Velocity, SysExFlavour
 
 
 # Helpers
 
-@docs eox, validRecording
+@docs endOfExclusive, isValidRecording
 
 -}
 
