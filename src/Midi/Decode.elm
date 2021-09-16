@@ -124,41 +124,39 @@ midiEvent : Maybe Midi.Event -> Decoder Midi.Event
 midiEvent parent =
     choice
         [ eventMeta
-        , Just <$> eventNoteOn
-        , Just <$> eventNoteOff
-        , Just <$> eventNoteAfterTouch
-        , Just <$> eventControlChange
-        , Just <$> eventProgramChange
-        , Just <$> eventChannelAfterTouch
-        , Just <$> eventPitchBend
-        , Just <$> eventFileSysExEvent
-        , Just <$> eventRunningStatus parent
+        , eventNoteOn
+        , eventNoteOff
+        , eventNoteAfterTouch
+        , eventControlChange
+        , eventProgramChange
+        , eventChannelAfterTouch
+        , eventPitchBend
+        , eventFileSysExEvent
+        , eventRunningStatus parent
         ]
-        <?> "midi event"
 
 
 eventMeta : Decoder (Maybe Midi.Event)
 eventMeta =
     bChar 0xFF
         *> choice
-            [ Just <$> eventSequenceNumber
-            , Just <$> eventText
-            , Just <$> eventCopyright
-            , Just <$> eventTrackName
-            , Just <$> eventInstrumentName
-            , Just <$> eventLyrics
-            , Just <$> eventMarker
-            , Just <$> eventCuePoint
-            , Just <$> eventChannelPrefix
-            , Just <$> eventTempoChange
-            , Just <$> eventSMPTEOffset
-            , Just <$> eventTimeSignature
-            , Just <$> eventKeySignature
-            , Just <$> eventSequencerSpecific
+            [ eventSequenceNumber
+            , eventText
+            , eventCopyright
+            , eventTrackName
+            , eventInstrumentName
+            , eventLyrics
+            , eventMarker
+            , eventCuePoint
+            , eventChannelPrefix
+            , eventTempoChange
+            , eventSMPTEOffset
+            , eventTimeSignature
+            , eventKeySignature
+            , eventSequencerSpecific
             , eventEndOfTrack
-            , Just <$> eventUnspecified
+            , eventUnspecified
             ]
-        <?> "meta event"
 
 
 eventEndOfTrack : Decoder (Maybe Midi.Event)
