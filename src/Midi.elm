@@ -66,10 +66,6 @@ type alias Ticks =
 
 
 {-| MIDI event.
-
-Note that RunningStatus messages are not included within MidiEvent
-because the parser translates them to the underlying channel messages.
-
 -}
 type Event
     = -- Meta
