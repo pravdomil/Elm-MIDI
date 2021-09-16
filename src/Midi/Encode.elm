@@ -16,25 +16,44 @@ event : Midi.Event -> List Int
 event a =
     case a of
         Midi.SysEx bytes ->
-            0xF0 :: (bytes ++ [ 0xF7 ])
+            [ 0xF0
+            , bytes
+            , 0xF7
+            ]
 
         Midi.NoteOn channel note velocity ->
-            [ 0x90 + channel, note, velocity ]
+            [ 0x90 + channel
+            , note
+            , velocity
+            ]
 
         Midi.NoteOff channel note velocity ->
-            [ 0x80 + channel, note, velocity ]
+            [ 0x80 + channel
+            , note
+            , velocity
+            ]
 
         Midi.NoteAfterTouch channel note velocity ->
-            [ 0xA0 + channel, note, velocity ]
+            [ 0xA0 + channel
+            , note
+            , velocity
+            ]
 
         Midi.ControlChange channel controllerNumber value ->
-            [ 0xB0 + channel, controllerNumber, value ]
+            [ 0xB0 + channel
+            , controllerNumber
+            , value
+            ]
 
         Midi.ProgramChange channel value ->
-            [ 0xC0 + channel, value ]
+            [ 0xC0 + channel
+            , value
+            ]
 
         Midi.ChannelAfterTouch channel velocity ->
-            [ 0xD0 + channel, velocity ]
+            [ 0xD0 + channel
+            , velocity
+            ]
 
         Midi.PitchBend channel bend ->
             let
@@ -44,7 +63,10 @@ event a =
                 upper =
                     Bitwise.shiftRightBy 7 bend
             in
-            [ 0xE0 + channel, lower, upper ]
+            [ 0xE0 + channel
+            , lower
+            , upper
+            ]
 
         _ ->
             Debug.crash "Unknown MIDI event."
