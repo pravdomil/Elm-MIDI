@@ -51,27 +51,44 @@ fileDecoder =
             (\v ->
                 case v.trackType of
                     0 ->
-                        tracksDecoder |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
+                        tracksDecoder v.trackCount |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
 
                     1 ->
-                        tracksDecoder |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
+                        tracksDecoder v.trackCount |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
 
                     2 ->
-                        tracksDecoder |> Decode.map (Midi.File v.tempo Midi.Independent)
+                        tracksDecoder v.trackCount |> Decode.map (Midi.File v.tempo Midi.Independent)
 
                     _ ->
                         Decode.fail
             )
 
 
+tracksDecoder : Int -> Decoder ( Midi.Track, List Midi.Track )
+tracksDecoder trackCount =
+    Decode.loop ( 0, [] )
+        (\( i, acc ) ->
+            if i == trackCount then
+                Decode.succeed (Decode.Done (List.reverse acc))
+
+            else
+                track
+                    |> Decode.map
+                        (\v ->
+                            Decode.Loop ( i + 1, v :: acc )
+                        )
+        )
+        |> Decode.andThen
+            (\v ->
+                case v of
+                    first :: rest ->
+                        Decode.succeed ( first, rest )
+
+                    _ ->
+                        Decode.fail
+            )
 
 
-{-| We pass Nothing to midiMessages because the very first message
-has no parent (antecedent).
--}
-midiTrack : Decoder Track
-midiTrack =
-    decodeConst "MTrk" *> uInt32 *> midiMessages Nothing <?> "midi track"
 
 
 midiMessages : Maybe Midi.Event -> Decoder (List MidiMessage)
