@@ -30,7 +30,7 @@ type Recording
     = Recording Int Track (List Track)
 
 
-{-| Discriminate between the types of tracks in a recording.
+{-| Distinguish between track type.
 Are they played simultaneously or independently.
 -}
 type TrackType
@@ -38,7 +38,7 @@ type TrackType
     | Independent
 
 
-{-| Midi Track
+{-| Midi track.
 -}
 type alias Track =
     List MidiMessage
