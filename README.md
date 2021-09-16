@@ -1,4 +1,4 @@
-elm-comidi
+Elm MIDI
 ===========
 [![Build Status](https://travis-ci.org/newlandsvalley/elm-comidi.svg?branch=master)](https://travis-ci.org/newlandsvalley/elm-comidi)
 
