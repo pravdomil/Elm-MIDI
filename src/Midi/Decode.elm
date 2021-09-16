@@ -10,32 +10,6 @@ import Parser exposing (Parser)
 
 
 
--- low level parsers
-{- parse a binary 8 bit integer -}
-
-
-uInt8 : Parser Int
-uInt8 =
-    toCode <$> anyChar
-
-
-
-{- parse a signed binary 8 bit integer -}
-
-
-signedInt8 : Parser Int
-signedInt8 =
-    (\i ->
-        if i > 127 then
-            i - 256
-
-        else
-            i
-    )
-        <$> uInt8
-
-
-
 {- parse a specific binary 8 bit integer -}
 
 
