@@ -6,10 +6,11 @@ module Midi.Decode exposing (normalise, file, event)
 
 -}
 
+import Midi
 import Parser exposing (Parser)
 
 
-midi : Parser MidiRecording
+midi : Parser Midi.Recording
 midi =
     midiHeader
         |> andThen midiTracks
@@ -73,7 +74,7 @@ midiTrack =
     string "MTrk" *> uInt32 *> midiMessages Nothing <?> "midi track"
 
 
-midiMessages : Maybe MidiEvent -> Parser (List MidiMessage)
+midiMessages : Maybe Midi.Event -> Parser (List MidiMessage)
 midiMessages parent =
     midiMessage parent
         >>= continueOrNot
@@ -85,7 +86,7 @@ midiMessages parent =
 -}
 
 
-continueOrNot : ( Ticks, Maybe MidiEvent ) -> Parser (List MidiMessage)
+continueOrNot : ( Ticks, Maybe Midi.Event ) -> Parser (List MidiMessage)
 continueOrNot maybeLastMessage =
     case maybeLastMessage of
         ( ticks, Just lastEvent ) ->
@@ -96,7 +97,7 @@ continueOrNot maybeLastMessage =
             succeed []
 
 
-midiMessage : Maybe MidiEvent -> Parser ( Ticks, Maybe MidiEvent )
+midiMessage : Maybe Midi.Event -> Parser ( Ticks, Maybe Midi.Event )
 midiMessage parent =
     (,)
         <$> varInt
@@ -110,7 +111,7 @@ midiMessage parent =
 -}
 
 
-midiEvent : Maybe MidiEvent -> Parser MidiEvent
+midiEvent : Maybe Midi.Event -> Parser Midi.Event
 midiEvent parent =
     choice
         [ metaEvent
@@ -126,7 +127,7 @@ midiEvent parent =
         <?> "midi event"
 
 
-midiFileEvent : Maybe MidiEvent -> Parser (Maybe MidiEvent)
+midiFileEvent : Maybe Midi.Event -> Parser (Maybe Midi.Event)
 midiFileEvent parent =
     choice
         [ metaFileEvent
@@ -147,7 +148,7 @@ midiFileEvent parent =
 -- metadata parsers
 
 
-metaEvent : Parser MidiEvent
+metaEvent : Parser Midi.Event
 metaEvent =
     bChar 0xFF
         *> choice
@@ -170,7 +171,7 @@ metaEvent =
         <?> "meta event"
 
 
-metaFileEvent : Parser (Maybe MidiEvent)
+metaFileEvent : Parser (Maybe Midi.Event)
 metaFileEvent =
     bChar 0xFF
         *> choice
@@ -194,12 +195,12 @@ metaFileEvent =
         <?> "meta event"
 
 
-parseEndOfTrack : Parser (Maybe MidiEvent)
+parseEndOfTrack : Parser (Maybe Midi.Event)
 parseEndOfTrack =
     bChar 0x2F *> bChar 0x00 *> succeed Nothing <?> "sequence number"
 
 
-parseSequenceNumber : Parser MidiEvent
+parseSequenceNumber : Parser Midi.Event
 parseSequenceNumber =
     SequenceNumber <$> (bChar 0x00 *> bChar 0x02 *> uInt16 <?> "sequence number")
 
@@ -225,7 +226,7 @@ parseMetaBytes target =
         <$> (bChar target *> varInt >>= (\l -> count l anyChar))
 
 
-parseText : Parser MidiEvent
+parseText : Parser Midi.Event
 parseText =
     Text <$> parseMetaString 0x01 <?> "text"
 
@@ -234,12 +235,12 @@ parseText =
 -- parseText = log "text" <$> (Text <$> parseMetaString 0x01 <?> "text" )
 
 
-parseCopyright : Parser MidiEvent
+parseCopyright : Parser Midi.Event
 parseCopyright =
     Copyright <$> parseMetaString 0x02 <?> "copyright"
 
 
-parseTrackName : Parser MidiEvent
+parseTrackName : Parser Midi.Event
 parseTrackName =
     TrackName <$> parseMetaString 0x03 <?> "track name"
 
@@ -251,52 +252,52 @@ parseTrackName =
 -}
 
 
-parseInstrumentName : Parser MidiEvent
+parseInstrumentName : Parser Midi.Event
 parseInstrumentName =
     InstrumentName <$> parseMetaString 0x04 <?> "instrument name"
 
 
-parseLyrics : Parser MidiEvent
+parseLyrics : Parser Midi.Event
 parseLyrics =
     Lyrics <$> parseMetaString 0x05 <?> "lyrics"
 
 
-parseMarker : Parser MidiEvent
+parseMarker : Parser Midi.Event
 parseMarker =
     Marker <$> parseMetaString 0x06 <?> "marker"
 
 
-parseCuePoint : Parser MidiEvent
+parseCuePoint : Parser Midi.Event
 parseCuePoint =
     CuePoint <$> parseMetaString 0x07 <?> "cue point"
 
 
-parseChannelPrefix : Parser MidiEvent
+parseChannelPrefix : Parser Midi.Event
 parseChannelPrefix =
     ChannelPrefix <$> (bChar 0x20 *> bChar 0x01 *> uInt8 <?> "channel prefix")
 
 
-parseTempoChange : Parser MidiEvent
+parseTempoChange : Parser Midi.Event
 parseTempoChange =
     Tempo <$> (bChar 0x51 *> bChar 0x03 *> uInt24) <?> "tempo change"
 
 
-parseSMPTEOffset : Parser MidiEvent
+parseSMPTEOffset : Parser Midi.Event
 parseSMPTEOffset =
     bChar 0x54 *> bChar 0x03 *> (SMPTEOffset <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <?> "SMTPE offset")
 
 
-parseTimeSignature : Parser MidiEvent
+parseTimeSignature : Parser Midi.Event
 parseTimeSignature =
     bChar 0x58 *> bChar 0x04 *> (buildTimeSig <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8) <?> "time signature"
 
 
-parseKeySignature : Parser MidiEvent
+parseKeySignature : Parser Midi.Event
 parseKeySignature =
     bChar 0x59 *> bChar 0x02 *> (KeySignature <$> signedInt8 <*> uInt8)
 
 
-parseSequencerSpecific : Parser MidiEvent
+parseSequencerSpecific : Parser Midi.Event
 parseSequencerSpecific =
     SequencerSpecific <$> parseMetaBytes 0x7F <?> "sequencer specific"
 
@@ -308,7 +309,7 @@ parseSequencerSpecific =
 -}
 
 
-sysExEvent : Parser MidiEvent
+sysExEvent : Parser Midi.Event
 sysExEvent =
     let
         eoxChar =
@@ -335,7 +336,7 @@ sysExEvent =
 -}
 
 
-fileSysExEvent : Parser MidiEvent
+fileSysExEvent : Parser Midi.Event
 fileSysExEvent =
     let
         parseFlavour : Parser SysExFlavour
@@ -346,7 +347,7 @@ fileSysExEvent =
         sysexData =
             satisfy (\c -> toCode c < 128)
 
-        parseUnescapedSysex : Parser MidiEvent
+        parseUnescapedSysex : Parser Midi.Event
         parseUnescapedSysex =
             SysEx
                 <$> (bChar 0xF0 $> F0)
@@ -357,7 +358,7 @@ fileSysExEvent =
                     )
                 <?> "unescaped system exclusive"
 
-        parseEscapedSysex : Parser MidiEvent
+        parseEscapedSysex : Parser Midi.Event
         parseEscapedSysex =
             SysEx
                 <$> (bChar 0xF7 $> F7)
@@ -381,7 +382,7 @@ fileSysExEvent =
 -}
 
 
-parseUnspecified : Parser MidiEvent
+parseUnspecified : Parser Midi.Event
 parseUnspecified =
     Unspecified <$> notTrackEnd <*> (uInt8 >>= (\l -> count l uInt8))
 
@@ -400,7 +401,7 @@ trackEndMessage =
 -- channel parsers
 
 
-noteOn : Parser MidiEvent
+noteOn : Parser Midi.Event
 noteOn =
     buildNote <$> bRange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
 
@@ -409,7 +410,7 @@ noteOn =
 -- noteOn = log "note on" <$> ( buildNote <$> brange 0x90 0x9F <*> int8 <*> int8 <?> "note on" )
 
 
-noteOff : Parser MidiEvent
+noteOff : Parser Midi.Event
 noteOff =
     buildNoteOff <$> bRange 0x80 0x8F <*> uInt8 <*> uInt8 <?> "note off"
 
@@ -418,7 +419,7 @@ noteOff =
 -- noteOff = log "note off" <$> ( buildNoteOff <$> brange 0x80 0x8F <*> int8 <*> int8 <?> "note off" )
 
 
-noteAfterTouch : Parser MidiEvent
+noteAfterTouch : Parser Midi.Event
 noteAfterTouch =
     buildNoteAfterTouch <$> bRange 0xA0 0xAF <*> uInt8 <*> uInt8 <?> "note after touch"
 
@@ -427,7 +428,7 @@ noteAfterTouch =
 -- noteAfterTouch = log "note afterTouch" <$> ( buildNoteAfterTouch <$> brange 0xA0 0xAF <*> int8 <*> int8 <?> "note after touch" )
 
 
-controlChange : Parser MidiEvent
+controlChange : Parser Midi.Event
 controlChange =
     buildControlChange <$> bRange 0xB0 0xBF <*> uInt8 <*> uInt8 <?> "control change"
 
@@ -436,7 +437,7 @@ controlChange =
 -- controlChange = log "control change" <$> ( buildControlChange <$> brange 0xB0 0xBF <*> int8 <*> int8 <?> "control change" )
 
 
-programChange : Parser MidiEvent
+programChange : Parser Midi.Event
 programChange =
     buildProgramChange <$> bRange 0xC0 0xCF <*> uInt8 <?> "program change"
 
@@ -445,7 +446,7 @@ programChange =
 -- programChange = log "program change" <$> ( buildProgramChange <$> brange 0xC0 0xCF <*> int8 <?> "program change" )
 
 
-channelAfterTouch : Parser MidiEvent
+channelAfterTouch : Parser Midi.Event
 channelAfterTouch =
     buildChannelAfterTouch <$> bRange 0xD0 0xDF <*> uInt8 <?> "channel after touch"
 
@@ -454,7 +455,7 @@ channelAfterTouch =
 -- channelAfterTouch = log "channel afterTouch" <$> ( buildChannelAfterTouch <$> brange 0xD0 0xDF <*> int8 <?> "channel after touch")
 
 
-pitchBend : Parser MidiEvent
+pitchBend : Parser Midi.Event
 pitchBend =
     buildPitchBend <$> bRange 0xE0 0xEF <*> uInt8 <*> uInt8 <?> "pitch bend"
 
@@ -467,7 +468,7 @@ pitchBend =
 -}
 
 
-runningStatus : Maybe MidiEvent -> Parser MidiEvent
+runningStatus : Maybe Midi.Event -> Parser Midi.Event
 runningStatus parent =
     case parent of
         Just (NoteOn status _ _) ->
@@ -507,7 +508,7 @@ headerChunk l a b c =
 {- build NoteOn (unless the velocity is zero in which case NoteOff) -}
 
 
-buildNote : Int -> Int -> Int -> MidiEvent
+buildNote : Int -> Int -> Int -> Midi.Event
 buildNote cmd note velocity =
     let
         channel =
@@ -529,7 +530,7 @@ buildNote cmd note velocity =
 {- abstract builders that construct MidiEvents that all have the same shape -}
 
 
-channelBuilder3 : (Int -> Int -> Int -> MidiEvent) -> Int -> Int -> Int -> MidiEvent
+channelBuilder3 : (Int -> Int -> Int -> Midi.Event) -> Int -> Int -> Int -> Midi.Event
 channelBuilder3 construct cmd x y =
     let
         channel =
@@ -539,7 +540,7 @@ channelBuilder3 construct cmd x y =
     construct channel x y
 
 
-channelBuilder2 : (Int -> Int -> MidiEvent) -> Int -> Int -> MidiEvent
+channelBuilder2 : (Int -> Int -> Midi.Event) -> Int -> Int -> Midi.Event
 channelBuilder2 construct cmd x =
     let
         channel =
@@ -553,7 +554,7 @@ channelBuilder2 construct cmd x =
 {- build NoteOff -}
 
 
-buildNoteOff : Int -> Int -> Int -> MidiEvent
+buildNoteOff : Int -> Int -> Int -> Midi.Event
 buildNoteOff cmd note velocity =
     channelBuilder3 NoteOff cmd note velocity
 
@@ -562,7 +563,7 @@ buildNoteOff cmd note velocity =
 {- build Note AfterTouch AKA Polyphonic Key Pressure -}
 
 
-buildNoteAfterTouch : Int -> Int -> Int -> MidiEvent
+buildNoteAfterTouch : Int -> Int -> Int -> Midi.Event
 buildNoteAfterTouch cmd note pressure =
     channelBuilder3 NoteAfterTouch cmd note pressure
 
@@ -571,7 +572,7 @@ buildNoteAfterTouch cmd note pressure =
 {- build Control Change -}
 
 
-buildControlChange : Int -> Int -> Int -> MidiEvent
+buildControlChange : Int -> Int -> Int -> Midi.Event
 buildControlChange cmd num value =
     channelBuilder3 ControlChange cmd num value
 
@@ -580,7 +581,7 @@ buildControlChange cmd num value =
 {- build Program Change -}
 
 
-buildProgramChange : Int -> Int -> MidiEvent
+buildProgramChange : Int -> Int -> Midi.Event
 buildProgramChange cmd num =
     channelBuilder2 ProgramChange
         cmd
@@ -591,7 +592,7 @@ buildProgramChange cmd num =
 {- build Channel AfterTouch AKA Channel Key Pressure -}
 
 
-buildChannelAfterTouch : Int -> Int -> MidiEvent
+buildChannelAfterTouch : Int -> Int -> Midi.Event
 buildChannelAfterTouch cmd num =
     channelBuilder2 ChannelAfterTouch cmd num
 
@@ -600,7 +601,7 @@ buildChannelAfterTouch cmd num =
 {- build Pitch Bend -}
 
 
-buildPitchBend : Int -> Int -> Int -> MidiEvent
+buildPitchBend : Int -> Int -> Int -> Midi.Event
 buildPitchBend cmd lsb msb =
     channelBuilder2 PitchBend cmd <| lsb + shiftLeftBy 7 msb
 
@@ -609,7 +610,7 @@ buildPitchBend cmd lsb msb =
 {- build a Time Signature -}
 
 
-buildTimeSig : Int -> Int -> Int -> Int -> MidiEvent
+buildTimeSig : Int -> Int -> Int -> Int -> Midi.Event
 buildTimeSig nn dd cc bb =
     let
         denom =
@@ -648,7 +649,7 @@ makeTuple a b =
 
 {-| Parse a MIDI event
 -}
-event : String -> Result String MidiEvent
+event : String -> Result String Midi.Event
 event s =
     case Combine.parse (midiEvent Nothing) s of
         Ok ( _, _, n ) ->
