@@ -7,69 +7,73 @@ module Midi.Encode exposing (event, recording)
 -}
 
 import Bitwise
+import Bytes exposing (Bytes)
+import Bytes.Encode as Encode
 import Midi
 
 
-{-| Generate a MIDI event
+{-| Encode MIDI event.
 -}
-event : Midi.Event -> List Int
+event : Midi.Event -> Bytes
 event a =
-    case a of
+    (case a of
         Midi.SysEx bytes ->
-            [ 0xF0
-            , bytes
-            , 0xF7
+            [ Encode.unsignedInt8 0xF0
+            , Encode.bytes bytes
+            , Encode.unsignedInt8 0xF7
             ]
 
         Midi.NoteOn channel note velocity ->
-            [ 0x90 + channel
-            , note
-            , velocity
+            [ Encode.unsignedInt8 (0x90 + channel)
+            , Encode.unsignedInt8 note
+            , Encode.unsignedInt8 velocity
             ]
 
         Midi.NoteOff channel note velocity ->
-            [ 0x80 + channel
-            , note
-            , velocity
+            [ Encode.unsignedInt8 (0x80 + channel)
+            , Encode.unsignedInt8 note
+            , Encode.unsignedInt8 velocity
             ]
 
         Midi.NoteAfterTouch channel note velocity ->
-            [ 0xA0 + channel
-            , note
-            , velocity
+            [ Encode.unsignedInt8 (0xA0 + channel)
+            , Encode.unsignedInt8 note
+            , Encode.unsignedInt8 velocity
             ]
 
         Midi.ControlChange channel controllerNumber value ->
-            [ 0xB0 + channel
-            , controllerNumber
-            , value
+            [ Encode.unsignedInt8 (0xB0 + channel)
+            , Encode.unsignedInt8 controllerNumber
+            , Encode.unsignedInt8 value
             ]
 
         Midi.ProgramChange channel value ->
-            [ 0xC0 + channel
-            , value
+            [ Encode.unsignedInt8 (0xC0 + channel)
+            , Encode.unsignedInt8 value
             ]
 
         Midi.ChannelAfterTouch channel velocity ->
-            [ 0xD0 + channel
-            , velocity
+            [ Encode.unsignedInt8 (0xD0 + channel)
+            , Encode.unsignedInt8 velocity
             ]
 
         Midi.PitchBend channel bend ->
             let
+                lower : Int
                 lower =
                     Bitwise.and bend 127
 
+                upper : Int
                 upper =
                     Bitwise.shiftRightBy 7 bend
             in
-            [ 0xE0 + channel
-            , lower
-            , upper
+            [ Encode.unsignedInt8 (0xE0 + channel)
+            , Encode.unsignedInt8 lower
+            , Encode.unsignedInt8 upper
             ]
-
-        _ ->
-            Debug.crash "Unknown MIDI event."
+    )
+        |> Encode.sequence
+        |> Encode.encode
 
 
 {-| Generate a MIDI recording
