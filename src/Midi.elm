@@ -1,5 +1,5 @@
 module Midi exposing
-    ( Recording(..), TracksType(..), Track
+    ( Recording(..), TrackType(..), Track
     , MidiMessage, Ticks, MidiEvent(..)
     , Channel, Note, Velocity, SysExFlavour(..)
     , endOfExclusive, isValidRecording
@@ -10,7 +10,7 @@ module Midi exposing
 
 # Types
 
-@docs Recording, TracksType, Track
+@docs Recording, TrackType, Track
 
 @docs MidiMessage, Ticks, MidiEvent
 
@@ -33,7 +33,7 @@ type Recording
 {-| Discriminate between the types of tracks in a recording.
 Are they played simultaneously or independently.
 -}
-type TracksType
+type TrackType
     = Simultaneous
     | Independent
 
