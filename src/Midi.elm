@@ -139,7 +139,7 @@ endOfExclusive =
 
 
 {-| Checks if MidiRecording is valid.
-Verifies multipart sysex messages.
+Verifies multipart system messages.
 -}
 isValidRecording : Recording -> Bool
 isValidRecording (Recording _ a b) =
