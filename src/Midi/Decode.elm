@@ -13,8 +13,8 @@ import Parser exposing (Parser)
 {- parse a specific binary 8 bit integer -}
 
 
-bchar : Int -> Parser Int
-bchar val =
+bChar : Int -> Parser Int
+bChar val =
     toCode <$> char (fromCode val)
 
 
@@ -38,7 +38,7 @@ brange l r =
 
 bchoice : Int -> Int -> Parser Int
 bchoice x y =
-    bchar x <|> bchar y
+    bChar x <|> bChar y
 
 
 notTrackEnd : Parser Int
@@ -257,7 +257,7 @@ midiFileEvent parent =
 
 metaEvent : Parser MidiEvent
 metaEvent =
-    bchar 0xFF
+    bChar 0xFF
         *> choice
             [ parseSequenceNumber
             , parseText
@@ -280,7 +280,7 @@ metaEvent =
 
 metaFileEvent : Parser (Maybe MidiEvent)
 metaFileEvent =
-    bchar 0xFF
+    bChar 0xFF
         *> choice
             [ Just <$> parseSequenceNumber
             , Just <$> parseText
@@ -304,12 +304,12 @@ metaFileEvent =
 
 parseEndOfTrack : Parser (Maybe MidiEvent)
 parseEndOfTrack =
-    bchar 0x2F *> bchar 0x00 *> succeed Nothing <?> "sequence number"
+    bChar 0x2F *> bChar 0x00 *> succeed Nothing <?> "sequence number"
 
 
 parseSequenceNumber : Parser MidiEvent
 parseSequenceNumber =
-    SequenceNumber <$> (bchar 0x00 *> bchar 0x02 *> uint16 <?> "sequence number")
+    SequenceNumber <$> (bChar 0x00 *> bChar 0x02 *> uint16 <?> "sequence number")
 
 
 
@@ -320,7 +320,7 @@ parseMetaString : Int -> Parser String
 parseMetaString target =
     String.fromList
         -- <$> (bchar target *> varInt `andThen` (\l -> count l anyChar))
-        <$> (bchar target *> varInt >>= (\l -> count l anyChar))
+        <$> (bChar target *> varInt >>= (\l -> count l anyChar))
 
 
 
@@ -330,7 +330,7 @@ parseMetaString target =
 parseMetaBytes : Int -> Parser (List Byte)
 parseMetaBytes target =
     List.map toCode
-        <$> (bchar target *> varInt >>= (\l -> count l anyChar))
+        <$> (bChar target *> varInt >>= (\l -> count l anyChar))
 
 
 parseText : Parser MidiEvent
@@ -381,27 +381,27 @@ parseCuePoint =
 
 parseChannelPrefix : Parser MidiEvent
 parseChannelPrefix =
-    ChannelPrefix <$> (bchar 0x20 *> bchar 0x01 *> uInt8 <?> "channel prefix")
+    ChannelPrefix <$> (bChar 0x20 *> bChar 0x01 *> uInt8 <?> "channel prefix")
 
 
 parseTempoChange : Parser MidiEvent
 parseTempoChange =
-    Tempo <$> (bchar 0x51 *> bchar 0x03 *> uint24) <?> "tempo change"
+    Tempo <$> (bChar 0x51 *> bChar 0x03 *> uint24) <?> "tempo change"
 
 
 parseSMPTEOffset : Parser MidiEvent
 parseSMPTEOffset =
-    bchar 0x54 *> bchar 0x03 *> (SMPTEOffset <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <?> "SMTPE offset")
+    bChar 0x54 *> bChar 0x03 *> (SMPTEOffset <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <?> "SMTPE offset")
 
 
 parseTimeSignature : Parser MidiEvent
 parseTimeSignature =
-    bchar 0x58 *> bchar 0x04 *> (buildTimeSig <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8) <?> "time signature"
+    bChar 0x58 *> bChar 0x04 *> (buildTimeSig <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8) <?> "time signature"
 
 
 parseKeySignature : Parser MidiEvent
 parseKeySignature =
-    bchar 0x59 *> bchar 0x02 *> (KeySignature <$> signedInt8 <*> uInt8)
+    bChar 0x59 *> bChar 0x02 *> (KeySignature <$> signedInt8 <*> uInt8)
 
 
 parseSequencerSpecific : Parser MidiEvent
@@ -425,7 +425,7 @@ sysExEvent =
     (\bytes -> SysEx F0 bytes)
         <$> (List.map toCode
                 <$> (String.toList
-                        <$> (bchar 0xF0 *> while ((/=) eoxChar))
+                        <$> (bChar 0xF0 *> while ((/=) eoxChar))
                     )
             )
         <?> "system exclusive"
@@ -448,7 +448,7 @@ fileSysExEvent =
     let
         parseFlavour : Parser SysExFlavour
         parseFlavour =
-            (bchar 0xF0 $> F0) <|> (bchar 0xF7 $> F7) <?> "sysex flavour"
+            (bChar 0xF0 $> F0) <|> (bChar 0xF7 $> F7) <?> "sysex flavour"
 
         sysexData : Parser Char
         sysexData =
@@ -457,7 +457,7 @@ fileSysExEvent =
         parseUnescapedSysex : Parser MidiEvent
         parseUnescapedSysex =
             SysEx
-                <$> (bchar 0xF0 $> F0)
+                <$> (bChar 0xF0 $> F0)
                 <*> (List.map toCode
                         <$> (varInt
                                 >>= (\n -> count n sysexData)
@@ -468,7 +468,7 @@ fileSysExEvent =
         parseEscapedSysex : Parser MidiEvent
         parseEscapedSysex =
             SysEx
-                <$> (bchar 0xF7 $> F7)
+                <$> (bChar 0xF7 $> F7)
                 <*> (List.map toCode
                         <$> (varInt
                                 >>= (\n -> count n anyChar)
@@ -500,7 +500,7 @@ parseUnspecified =
 
 trackEndMessage : Parser ()
 trackEndMessage =
-    varInt *> bchar 0xFF *> bchar 0x2F *> bchar 0x00 *> succeed () <?> "track end"
+    varInt *> bChar 0xFF *> bChar 0x2F *> bChar 0x00 *> succeed () <?> "track end"
 
 
 
