@@ -10,37 +10,6 @@ import Parser exposing (Parser)
 
 
 
--- fixed length integers
-
-
-uInt16 : Parser Int
-uInt16 =
-    let
-        toInt16 a b =
-            shiftLeftBy 8 a + b
-    in
-    toInt16 <$> uInt8 <*> uInt8
-
-
-uInt24 : Parser Int
-uInt24 =
-    let
-        toInt24 a b c =
-            shiftLeftBy 16 a + shiftLeftBy 8 b + c
-    in
-    toInt24 <$> uInt8 <*> uInt8 <*> uInt8
-
-
-uInt32 : Parser Int
-uInt32 =
-    let
-        toUint32 a b c d =
-            shiftLeftBy 24 a + shiftLeftBy 16 b + shiftLeftBy 8 c + d
-    in
-    toUint32 <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8
-
-
-
 -- variable length integers
 
 
