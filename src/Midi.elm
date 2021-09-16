@@ -2,7 +2,6 @@ module Midi exposing
     ( Recording, TrackType(..), Track
     , Message, Ticks, Event(..)
     , Channel, Note, Velocity
-    , isValidRecording
     )
 
 {-| Type definitions for MIDI.
@@ -15,11 +14,6 @@ module Midi exposing
 @docs Message, Ticks, Event
 
 @docs Channel, Note, Velocity
-
-
-# Helpers
-
-@docs isValidRecording
 
 -}
 
@@ -120,50 +114,3 @@ type alias Note =
 -}
 type alias Velocity =
     Int
-
-
-{-|
-
-
-# Helpers
-
--}
-
-
-{-| Checks if recording is valid.
-Verifies multipart system messages.
--}
-isValidRecording : Recording -> Bool
-isValidRecording a =
-    let
-        validTrack : Bool -> List Message -> Bool
-        validTrack multipart c =
-            case c of
-                -- All multipart messages must be finished.
-                [] ->
-                    not multipart
-
-                t :: ts ->
-                    case ( t, multipart ) of
-                        ( ( _, SysEx data ), False ) ->
-                            case List.head (List.reverse data) of
-                                Just _ ->
-                                    validTrack False ts
-
-                                _ ->
-                                    validTrack True ts
-
-                        -- After the first packet all parts of a multipart packet
-                        -- start with F7.
-                        ( ( _, SysEx _ ), True ) ->
-                            False
-
-                        -- There must be no MIDI events in between the packets of a
-                        -- multipart sysex message.
-                        ( _, True ) ->
-                            False
-
-                        _ ->
-                            validTrack multipart ts
-    in
-    List.all (validTrack False) (Tuple.first a.tracks :: Tuple.second a.tracks)
