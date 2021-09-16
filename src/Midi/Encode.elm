@@ -158,16 +158,16 @@ event a =
         Midi.Unspecified _ _ ->
             Err (NotSupported "Unspecified")
 
-        Midi.NoteOn channel note velocity ->
+        Midi.NoteOff channel note velocity ->
             Ok
-                [ Encode.unsignedInt8 (0x90 + channel)
+                [ Encode.unsignedInt8 (0x80 + channel)
                 , Encode.unsignedInt8 note
                 , Encode.unsignedInt8 velocity
                 ]
 
-        Midi.NoteOff channel note velocity ->
+        Midi.NoteOn channel note velocity ->
             Ok
-                [ Encode.unsignedInt8 (0x80 + channel)
+                [ Encode.unsignedInt8 (0x90 + channel)
                 , Encode.unsignedInt8 note
                 , Encode.unsignedInt8 velocity
                 ]
