@@ -21,9 +21,9 @@ type Error
 file : Midi.File -> Result Error Bytes
 file a =
     let
-        trackType : Int
-        trackType =
-            case a.trackType of
+        format : Int
+        format =
+            case a.format of
                 Midi.Simultaneous ->
                     1
 
@@ -41,7 +41,7 @@ file a =
             (\v ->
                 [ Encode.string "MThd"
                 , Encode.unsignedInt32 endianness 6
-                , Encode.unsignedInt16 endianness trackType
+                , Encode.unsignedInt16 endianness format
                 , Encode.unsignedInt16 endianness (List.length v)
                 , Encode.unsignedInt16 endianness a.tempo
                 , Encode.sequence v

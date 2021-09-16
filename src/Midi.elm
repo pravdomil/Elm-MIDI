@@ -1,5 +1,5 @@
 module Midi exposing
-    ( File, TrackType(..), Track
+    ( File, Format(..), Track
     , Message, Ticks, Event(..)
     , Channel, Note, Velocity
     )
@@ -9,7 +9,7 @@ module Midi exposing
 
 # Types
 
-@docs File, TrackType, Track
+@docs File, Format, Track
 
 @docs Message, Ticks, Event
 
@@ -24,7 +24,7 @@ import Bytes exposing (Bytes)
 -}
 type alias File =
     { tempo : TicksPerBeat
-    , trackType : TrackType
+    , format : Format
     , tracks : ( Track, List Track )
     }
 
@@ -35,10 +35,10 @@ type alias TicksPerBeat =
     Int
 
 
-{-| Distinguish between track type.
-Are they played simultaneously or independently.
+{-| Distinguish between MIDI formats.
+Are tracks played simultaneously or independently?
 -}
-type TrackType
+type Format
     = Simultaneous
     | Independent
 
