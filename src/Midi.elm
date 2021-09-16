@@ -1,7 +1,8 @@
 module Midi exposing
-    ( Track, MidiEvent(..), MidiMessage, TracksType(..), MidiRecording(..), Byte, Channel
-    , Note, Velocity, SysExFlavour(..), Ticks
-    , endOfExclusive, isValidRecording
+    ( MidiRecording(..), TracksType(..), Track
+    , MidiMessage, Ticks, MidiEvent(..)
+    , Note, Velocity, SysExFlavour(..)
+    , Channel, endOfExclusive, isValidRecording
     )
 
 {-| Type definitions for MIDI.
@@ -21,16 +22,75 @@ module Midi exposing
 -}
 
 
+{-| Midi Recording
+-}
+type MidiRecording
+    = SingleTrack Int Track
+    | MultipleTracks TracksType Int (List Track)
+
+
+{-| Discriminate between the types of tracks in a recording.
+Are they played simultaneously or independently.
+-}
+type TracksType
+    = Simultaneous
+    | Independent
+
+
+{-| Midi Track
+-}
+type alias Track =
+    List MidiMessage
+
+
+
+--
+
+
+{-| Midi Message
+-}
+type alias MidiMessage =
+    ( Ticks, MidiEvent )
+
+
 {-| Midi tick (elapsed time).
 -}
 type alias Ticks =
     Int
 
 
-{-| Hint that we're interested in the bytes in some MidiEvent constructors.
+{-| Midi Event
+
+Note that RunningStatus messages are not included within MidiEvent
+because the parser translates them to the underlying channel messages
+
 -}
-type alias Byte =
-    Int
+type MidiEvent
+    = -- meta messages
+      SequenceNumber Int
+    | Text String
+    | Copyright String
+    | TrackName String
+    | InstrumentName String
+    | Lyrics String
+    | Marker String
+    | CuePoint String
+    | ChannelPrefix Int
+    | Tempo Int
+    | SMPTEOffset Int Int Int Int Int
+    | TimeSignature Int Int Int Int
+    | KeySignature Int Int
+    | SequencerSpecific (List Int)
+    | SysEx SysExFlavour (List Int)
+    | Unspecified Int (List Int)
+      -- channel messages
+    | NoteOn Channel Note Velocity
+    | NoteOff Channel Note Velocity
+    | NoteAfterTouch Channel Note Velocity
+    | ControlChange Channel Int Int
+    | ProgramChange Channel Int
+    | ChannelAfterTouch Channel Velocity
+    | PitchBend Channel Int
 
 
 {-| Midi channel.
@@ -62,67 +122,6 @@ type SysExFlavour
     | F7 -- escaped
 
 
-{-| Midi Event
-
-Note that RunningStatus messages are not included within MidiEvent
-because the parser translates them to the underlying channel messages
-
--}
-type MidiEvent
-    = -- meta messages
-      SequenceNumber Int
-    | Text String
-    | Copyright String
-    | TrackName String
-    | InstrumentName String
-    | Lyrics String
-    | Marker String
-    | CuePoint String
-    | ChannelPrefix Int
-    | Tempo Int
-    | SMPTEOffset Int Int Int Int Int
-    | TimeSignature Int Int Int Int
-    | KeySignature Int Int
-    | SequencerSpecific (List Byte)
-    | SysEx SysExFlavour (List Byte)
-    | Unspecified Int (List Byte)
-      -- channel messages
-    | NoteOn Channel Note Velocity
-    | NoteOff Channel Note Velocity
-    | NoteAfterTouch Channel Note Velocity
-    | ControlChange Channel Int Int
-    | ProgramChange Channel Int
-    | ChannelAfterTouch Channel Velocity
-    | PitchBend Channel Int
-
-
-{-| Midi Message
--}
-type alias MidiMessage =
-    ( Ticks, MidiEvent )
-
-
-{-| Midi Track
--}
-type alias Track =
-    List MidiMessage
-
-
-{-| Discriminate between the types of tracks in a recording.
-Are they played simultaneously or independently.
--}
-type TracksType
-    = Simultaneous
-    | Independent
-
-
-{-| Midi Recording
--}
-type MidiRecording
-    = SingleTrack Int Track
-    | MultipleTracks TracksType Int (List Track)
-
-
 {-|
 
 
@@ -133,7 +132,7 @@ type MidiRecording
 
 {-| End of exclusive byte.
 -}
-endOfExclusive : Byte
+endOfExclusive : Int
 endOfExclusive =
     0xF7
 
