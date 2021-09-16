@@ -18,16 +18,11 @@ file a =
     Decode.decode fileDecoder a
 
 
-{-| Parse a MIDI event.
+{-| Decode MIDI event.
 -}
-event : String -> Result String Midi.Event
-event s =
-    case Combine.parse (midiEvent Nothing) s of
-        Ok ( _, _, n ) ->
-            Ok n
-
-        Err ( _, ctx, ms ) ->
-            Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
+event : Bytes -> Maybe Midi.Event
+event a =
+    Decode.decode (midiEvent Nothing) a
 
 
 
