@@ -689,6 +689,8 @@ normalise =
 -- Helpers
 
 
+{-| Variable length integers.
+-}
 varInt : Parser Int
 varInt =
     let
