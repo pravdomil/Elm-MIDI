@@ -14,8 +14,8 @@ import Parser exposing (Parser)
 {- parse a binary 8 bit integer -}
 
 
-int8 : Parser Int
-int8 =
+uInt8 : Parser Int
+uInt8 =
     toCode <$> anyChar
 
 
@@ -32,7 +32,7 @@ signedInt8 =
         else
             i
     )
-        <$> int8
+        <$> uInt8
 
 
 
@@ -86,7 +86,7 @@ uint16 =
         toInt16 a b =
             shiftLeftBy 8 a + b
     in
-    toInt16 <$> int8 <*> int8
+    toInt16 <$> uInt8 <*> uInt8
 
 
 uint24 : Parser Int
@@ -95,7 +95,7 @@ uint24 =
         toInt24 a b c =
             shiftLeftBy 16 a + shiftLeftBy 8 b + c
     in
-    toInt24 <$> int8 <*> int8 <*> int8
+    toInt24 <$> uInt8 <*> uInt8 <*> uInt8
 
 
 uint32 : Parser Int
@@ -104,7 +104,7 @@ uint32 =
         toUint32 a b c d =
             shiftLeftBy 24 a + shiftLeftBy 16 b + shiftLeftBy 8 c + d
     in
-    toUint32 <$> int8 <*> int8 <*> int8 <*> int8
+    toUint32 <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8
 
 
 
@@ -113,7 +113,7 @@ uint32 =
 
 varIntHelper : Parser (List Int)
 varIntHelper =
-    int8
+    uInt8
         >>= (\n ->
                 if n < 128 then
                     succeed [ n ]
@@ -407,7 +407,7 @@ parseCuePoint =
 
 parseChannelPrefix : Parser MidiEvent
 parseChannelPrefix =
-    ChannelPrefix <$> (bchar 0x20 *> bchar 0x01 *> int8 <?> "channel prefix")
+    ChannelPrefix <$> (bchar 0x20 *> bchar 0x01 *> uInt8 <?> "channel prefix")
 
 
 parseTempoChange : Parser MidiEvent
@@ -417,17 +417,17 @@ parseTempoChange =
 
 parseSMPTEOffset : Parser MidiEvent
 parseSMPTEOffset =
-    bchar 0x54 *> bchar 0x03 *> (SMPTEOffset <$> int8 <*> int8 <*> int8 <*> int8 <*> int8 <?> "SMTPE offset")
+    bchar 0x54 *> bchar 0x03 *> (SMPTEOffset <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <*> uInt8 <?> "SMTPE offset")
 
 
 parseTimeSignature : Parser MidiEvent
 parseTimeSignature =
-    bchar 0x58 *> bchar 0x04 *> (buildTimeSig <$> int8 <*> int8 <*> int8 <*> int8) <?> "time signature"
+    bchar 0x58 *> bchar 0x04 *> (buildTimeSig <$> uInt8 <*> uInt8 <*> uInt8 <*> uInt8) <?> "time signature"
 
 
 parseKeySignature : Parser MidiEvent
 parseKeySignature =
-    bchar 0x59 *> bchar 0x02 *> (KeySignature <$> signedInt8 <*> int8)
+    bchar 0x59 *> bchar 0x02 *> (KeySignature <$> signedInt8 <*> uInt8)
 
 
 parseSequencerSpecific : Parser MidiEvent
@@ -517,7 +517,7 @@ fileSysExEvent =
 
 parseUnspecified : Parser MidiEvent
 parseUnspecified =
-    Unspecified <$> notTrackEnd <*> (int8 >>= (\l -> count l int8))
+    Unspecified <$> notTrackEnd <*> (uInt8 >>= (\l -> count l uInt8))
 
 
 
@@ -536,7 +536,7 @@ trackEndMessage =
 
 noteOn : Parser MidiEvent
 noteOn =
-    buildNote <$> brange 0x90 0x9F <*> int8 <*> int8 <?> "note on"
+    buildNote <$> brange 0x90 0x9F <*> uInt8 <*> uInt8 <?> "note on"
 
 
 
@@ -545,7 +545,7 @@ noteOn =
 
 noteOff : Parser MidiEvent
 noteOff =
-    buildNoteOff <$> brange 0x80 0x8F <*> int8 <*> int8 <?> "note off"
+    buildNoteOff <$> brange 0x80 0x8F <*> uInt8 <*> uInt8 <?> "note off"
 
 
 
@@ -554,7 +554,7 @@ noteOff =
 
 noteAfterTouch : Parser MidiEvent
 noteAfterTouch =
-    buildNoteAfterTouch <$> brange 0xA0 0xAF <*> int8 <*> int8 <?> "note after touch"
+    buildNoteAfterTouch <$> brange 0xA0 0xAF <*> uInt8 <*> uInt8 <?> "note after touch"
 
 
 
@@ -563,7 +563,7 @@ noteAfterTouch =
 
 controlChange : Parser MidiEvent
 controlChange =
-    buildControlChange <$> brange 0xB0 0xBF <*> int8 <*> int8 <?> "control change"
+    buildControlChange <$> brange 0xB0 0xBF <*> uInt8 <*> uInt8 <?> "control change"
 
 
 
@@ -572,7 +572,7 @@ controlChange =
 
 programChange : Parser MidiEvent
 programChange =
-    buildProgramChange <$> brange 0xC0 0xCF <*> int8 <?> "program change"
+    buildProgramChange <$> brange 0xC0 0xCF <*> uInt8 <?> "program change"
 
 
 
@@ -581,7 +581,7 @@ programChange =
 
 channelAfterTouch : Parser MidiEvent
 channelAfterTouch =
-    buildChannelAfterTouch <$> brange 0xD0 0xDF <*> int8 <?> "channel after touch"
+    buildChannelAfterTouch <$> brange 0xD0 0xDF <*> uInt8 <?> "channel after touch"
 
 
 
@@ -590,7 +590,7 @@ channelAfterTouch =
 
 pitchBend : Parser MidiEvent
 pitchBend =
-    buildPitchBend <$> brange 0xE0 0xEF <*> int8 <*> int8 <?> "pitch bend"
+    buildPitchBend <$> brange 0xE0 0xEF <*> uInt8 <*> uInt8 <?> "pitch bend"
 
 
 
@@ -605,25 +605,25 @@ runningStatus : Maybe MidiEvent -> Parser MidiEvent
 runningStatus parent =
     case parent of
         Just (NoteOn status _ _) ->
-            NoteOn status <$> int8 <*> int8 <?> "note on running status"
+            NoteOn status <$> uInt8 <*> uInt8 <?> "note on running status"
 
         Just (NoteOff status _ _) ->
-            NoteOff status <$> int8 <*> int8 <?> "note off running status"
+            NoteOff status <$> uInt8 <*> uInt8 <?> "note off running status"
 
         Just (NoteAfterTouch status _ _) ->
-            NoteAfterTouch status <$> int8 <*> int8 <?> "note aftertouch running status"
+            NoteAfterTouch status <$> uInt8 <*> uInt8 <?> "note aftertouch running status"
 
         Just (ControlChange status _ _) ->
-            ControlChange status <$> int8 <*> int8 <?> "control change running status"
+            ControlChange status <$> uInt8 <*> uInt8 <?> "control change running status"
 
         Just (ProgramChange status _) ->
-            ProgramChange status <$> int8 <?> "program change running status"
+            ProgramChange status <$> uInt8 <?> "program change running status"
 
         Just (ChannelAfterTouch status _) ->
-            ChannelAfterTouch status <$> int8 <?> "channel aftertouch running status"
+            ChannelAfterTouch status <$> uInt8 <?> "channel aftertouch running status"
 
         Just (PitchBend status _) ->
-            PitchBend status <$> int8 <?> "pitch bend running status"
+            PitchBend status <$> uInt8 <?> "pitch bend running status"
 
         Just _ ->
             fail "inappropriate parent for running status"
@@ -767,7 +767,7 @@ consumeOverspill actual expected =
         >>= (\( cnt, rest ) ->
                 map (\_ -> rest) <|
                     skip <|
-                        count (cnt - expected) int8
+                        count (cnt - expected) uInt8
             )
 
 
