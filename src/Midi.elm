@@ -1,5 +1,5 @@
 module Midi exposing
-    ( MidiRecording(..), TracksType(..), Track
+    ( Recording(..), TracksType(..), Track
     , MidiMessage, Ticks, MidiEvent(..)
     , Channel, Note, Velocity, SysExFlavour(..)
     , endOfExclusive, isValidRecording
@@ -10,7 +10,7 @@ module Midi exposing
 
 # Types
 
-@docs MidiRecording, TracksType, Track
+@docs Recording, TracksType, Track
 
 @docs MidiMessage, Ticks, MidiEvent
 
@@ -24,11 +24,10 @@ module Midi exposing
 -}
 
 
-{-| Midi Recording
+{-| Midi recording.
 -}
-type MidiRecording
-    = SingleTrack Int Track
-    | MultipleTracks TracksType Int (List Track)
+type Recording
+    = Recording Int Track (List Track)
 
 
 {-| Discriminate between the types of tracks in a recording.
@@ -142,8 +141,8 @@ endOfExclusive =
 {-| Checks if MidiRecording is valid.
 Verifies multipart sysex messages.
 -}
-isValidRecording : MidiRecording -> Bool
-isValidRecording a =
+isValidRecording : Recording -> Bool
+isValidRecording (Recording _ a b) =
     let
         validTrack : Bool -> List MidiMessage -> Bool
         validTrack multipart b =
@@ -186,9 +185,4 @@ isValidRecording a =
                         _ ->
                             validTrack multipart ts
     in
-    case a of
-        SingleTrack _ b ->
-            validTrack False b
-
-        MultipleTracks _ _ b ->
-            List.all (validTrack False) b
+    List.all (validTrack False) (a :: b)
