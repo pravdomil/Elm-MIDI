@@ -13,14 +13,9 @@ import Midi
 
 {-| Decode MIDI file.
 -}
-file : Bytes -> Result String Midi.File
+file : Bytes -> Maybe Midi.File
 file a =
-    case Combine.parse fileDecoder a of
-        Ok ( _, _, n ) ->
-            Ok n
-
-        Err ( _, ctx, ms ) ->
-            Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
+    Decode.decode fileDecoder a
 
 
 {-| Parse a MIDI event.
