@@ -115,8 +115,7 @@ type alias Velocity =
 
 {-| System exclusive message.
 
-Discriminate between two different forms of SysExEvrnt as characterised by the
-lead-in byte, See <https://www.csie.ntu.edu.tw/~r92092/ref/midi/#sysex_event>.
+Distinguish between two different forms of system messages as characterised by the lead-in byte.
 
 -}
 type SysExFlavour
