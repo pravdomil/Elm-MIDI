@@ -114,10 +114,7 @@ messages =
 
 message : Maybe Midi.Message -> Decoder Midi.Message
 message parent =
-    (,)
-        <$> varInt
-        <*> midiFileEvent parent
-        <?> "midi message"
+    Decode.map2 Midi.Message varInt (midiEvent parent)
 
 
 midiEvent : Maybe Midi.Event -> Decoder Midi.Event
