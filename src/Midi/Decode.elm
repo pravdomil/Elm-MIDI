@@ -116,7 +116,7 @@ continueOrNot maybeLastMessage =
             succeed []
 
 
-midiMessage : Maybe Midi.Event -> Decoder ( Ticks, Maybe Midi.Event )
+midiMessage : Maybe Midi.Event -> Decoder ( Ticks, Midi.Event )
 midiMessage parent =
     (,)
         <$> varInt
@@ -124,29 +124,10 @@ midiMessage parent =
         <?> "midi message"
 
 
-{-| We need to pass the parent event to running status events in order to
-make sense of them.
--}
 midiEvent : Maybe Midi.Event -> Decoder Midi.Event
 midiEvent parent =
     choice
         [ eventMeta
-        , eventSysEx
-        , eventNoteOn
-        , eventNoteOff
-        , eventNoteAfterTouch
-        , eventControlChange
-        , eventProgramChange
-        , eventChannelAfterTouch
-        , eventPitchBend
-        ]
-        <?> "midi event"
-
-
-midiFileEvent : Maybe Midi.Event -> Decoder (Maybe Midi.Event)
-midiFileEvent parent =
-    choice
-        [ eventMetaFile
         , Just <$> eventNoteOn
         , Just <$> eventNoteOff
         , Just <$> eventNoteAfterTouch
@@ -160,35 +141,8 @@ midiFileEvent parent =
         <?> "midi event"
 
 
-
--- Metadata
-
-
-eventMeta : Decoder Midi.Event
+eventMeta : Decoder (Maybe Midi.Event)
 eventMeta =
-    bChar 0xFF
-        *> choice
-            [ eventSequenceNumber
-            , eventText
-            , eventCopyright
-            , eventTrackName
-            , eventInstrumentName
-            , eventLyrics
-            , eventMarker
-            , eventCuePoint
-            , eventChannelPrefix
-            , eventTempoChange
-            , eventSMPTEOffset
-            , eventTimeSignature
-            , eventKeySignature
-            , eventSequencerSpecific
-            , eventUnspecified
-            ]
-        <?> "meta event"
-
-
-eventMetaFile : Decoder (Maybe Midi.Event)
-eventMetaFile =
     bChar 0xFF
         *> choice
             [ Just <$> eventSequenceNumber
