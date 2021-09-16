@@ -18,11 +18,8 @@ import Midi
 event : Midi.Event -> List Int
 event a =
     case a of
-        Midi.SysEx Midi.F0 bytes ->
-            0xF0 :: (bytes ++ [ Midi.endOfExclusive ])
-
-        Midi.SysEx Midi.F7 bytes ->
-            Debug.crash "WebMIDI SysEx events should all be of the 0xF0 flavor."
+        Midi.SysEx bytes ->
+            0xF0 :: (bytes ++ [ 0xF7 ])
 
         Midi.NoteOn channel note velocity ->
             [ 0x90 + channel, note, velocity ]

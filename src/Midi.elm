@@ -2,7 +2,7 @@ module Midi exposing
     ( Recording(..), TrackType(..), Track
     , Message, Ticks, Event(..)
     , Channel, Note, Velocity
-    , endOfExclusive, isValidRecording
+    , isValidRecording
     )
 
 {-| Type definitions for MIDI.
@@ -19,7 +19,7 @@ module Midi exposing
 
 # Helpers
 
-@docs endOfExclusive, isValidRecording
+@docs isValidRecording
 
 -}
 
@@ -118,13 +118,6 @@ type alias Velocity =
 # Helpers
 
 -}
-
-
-{-| End of exclusive byte.
--}
-endOfExclusive : Int
-endOfExclusive =
-    0xF7
 
 
 {-| Checks if MidiRecording is valid.
