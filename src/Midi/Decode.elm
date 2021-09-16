@@ -1,8 +1,8 @@
-module Midi.Decode exposing (file, event, normalise)
+module Midi.Decode exposing (file, event)
 
 {-| Module for decoding MIDI.
 
-@docs file, event, normalise
+@docs file, event
 
 -}
 
@@ -28,19 +28,6 @@ event s =
 
         Err ( _, ctx, ms ) ->
             Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
-
-
-{-| Normalise the input before we parse by masking off all but the least
-significant 8 bits. We assume the string contains only bytes so this
-should be a no-op.
--}
-normalise : String -> String
-normalise =
-    let
-        f =
-            toCode >> and 0xFF >> fromCode
-    in
-    String.toList >> List.map f >> String.fromList
 
 
 
