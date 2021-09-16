@@ -2,146 +2,144 @@ module MidiTest exposing (..)
 
 import Char
 import Expect exposing (Expectation)
-import Fuzz exposing (Fuzzer, intRange)
-import Midi.Generate as Generate
-import Midi.Parse as Parse
-import Midi.Types exposing (..)
-import Random.Pcg as Random exposing (Generator)
+import Fuzz exposing (Fuzzer)
+import Midi
+import Random
 import Shrink exposing (Shrinker)
 import Test exposing (..)
 
 
-fuzzChannel : Fuzzer Channel
+fuzzChannel : Fuzzer Midi.Channel
 fuzzChannel =
-    intRange 0 15
+    Fuzz.intRange 0 15
 
 
-fuzzNote : Fuzzer Note
+fuzzNote : Fuzzer Midi.Note
 fuzzNote =
-    intRange 0 127
+    Fuzz.intRange 0 127
 
 
-fuzzVelocity : Fuzzer Velocity
+fuzzVelocity : Fuzzer Midi.Velocity
 fuzzVelocity =
-    intRange 0 127
+    Fuzz.intRange 0 127
 
 
-fuzzPositiveVelocity : Fuzzer Velocity
+fuzzPositiveVelocity : Fuzzer Midi.Velocity
 fuzzPositiveVelocity =
-    intRange 1 127
+    Fuzz.intRange 1 127
 
 
 fuzzControllerNumber : Fuzzer Int
 fuzzControllerNumber =
-    intRange 0 119
+    Fuzz.intRange 0 119
 
 
-generateChannel : Generator Channel
+generateChannel : Random.Generator Midi.Channel
 generateChannel =
     Random.int 0 15
 
 
-generateNote : Generator Note
+generateNote : Random.Generator Midi.Note
 generateNote =
     Random.int 0 127
 
 
-generateVelocity : Generator Velocity
+generateVelocity : Random.Generator Midi.Velocity
 generateVelocity =
     Random.int 0 127
 
 
-generatePositiveVelocity : Generator Velocity
+generatePositiveVelocity : Random.Generator Midi.Velocity
 generatePositiveVelocity =
     Random.int 1 127
 
 
-generateControllerNumber : Generator Int
+generateControllerNumber : Random.Generator Int
 generateControllerNumber =
     Random.int 0 119
 
 
-fuzzNoteOn : Fuzzer MidiEvent
+fuzzNoteOn : Fuzzer Midi.Event
 fuzzNoteOn =
-    Fuzz.map3 NoteOn fuzzChannel fuzzNote fuzzPositiveVelocity
+    Fuzz.map3 Midi.NoteOn fuzzChannel fuzzNote fuzzPositiveVelocity
 
 
-fuzzNoteOff : Fuzzer MidiEvent
+fuzzNoteOff : Fuzzer Midi.Event
 fuzzNoteOff =
-    Fuzz.map3 NoteOff fuzzChannel fuzzNote fuzzVelocity
+    Fuzz.map3 Midi.NoteOff fuzzChannel fuzzNote fuzzVelocity
 
 
-fuzzNoteAfterTouch : Fuzzer MidiEvent
+fuzzNoteAfterTouch : Fuzzer Midi.Event
 fuzzNoteAfterTouch =
-    Fuzz.map3 NoteAfterTouch fuzzChannel fuzzNote fuzzVelocity
+    Fuzz.map3 Midi.NoteAfterTouch fuzzChannel fuzzNote fuzzVelocity
 
 
-fuzzControlChange : Fuzzer MidiEvent
+fuzzControlChange : Fuzzer Midi.Event
 fuzzControlChange =
-    Fuzz.map3 ControlChange fuzzChannel fuzzControllerNumber fuzzVelocity
+    Fuzz.map3 Midi.ControlChange fuzzChannel fuzzControllerNumber fuzzVelocity
 
 
-fuzzProgramChange : Fuzzer MidiEvent
+fuzzProgramChange : Fuzzer Midi.Event
 fuzzProgramChange =
-    Fuzz.map2 ProgramChange fuzzChannel fuzzVelocity
+    Fuzz.map2 Midi.ProgramChange fuzzChannel fuzzVelocity
 
 
-fuzzChannelAfterTouch : Fuzzer MidiEvent
+fuzzChannelAfterTouch : Fuzzer Midi.Event
 fuzzChannelAfterTouch =
-    Fuzz.map2 ChannelAfterTouch fuzzChannel fuzzVelocity
+    Fuzz.map2 Midi.ChannelAfterTouch fuzzChannel fuzzVelocity
 
 
-fuzzPitchBend : Fuzzer MidiEvent
+fuzzPitchBend : Fuzzer Midi.Event
 fuzzPitchBend =
-    Fuzz.map2 PitchBend fuzzChannel (intRange 0 16383)
+    Fuzz.map2 Midi.PitchBend fuzzChannel (Fuzz.intRange 0 16383)
 
 
-generateNoteOn : Generator MidiEvent
+generateNoteOn : Random.Generator Midi.Event
 generateNoteOn =
-    Random.map3 NoteOn generateChannel generateNote generatePositiveVelocity
+    Random.map3 Midi.NoteOn generateChannel generateNote generatePositiveVelocity
 
 
-generateNoteOff : Generator MidiEvent
+generateNoteOff : Random.Generator Midi.Event
 generateNoteOff =
-    Random.map3 NoteOff generateChannel generateNote generateVelocity
+    Random.map3 Midi.NoteOff generateChannel generateNote generateVelocity
 
 
-generateNoteAfterTouch : Generator MidiEvent
+generateNoteAfterTouch : Random.Generator Midi.Event
 generateNoteAfterTouch =
-    Random.map3 NoteAfterTouch generateChannel generateNote generateVelocity
+    Random.map3 Midi.NoteAfterTouch generateChannel generateNote generateVelocity
 
 
-generateControlChange : Generator MidiEvent
+generateControlChange : Random.Generator Midi.Event
 generateControlChange =
-    Random.map3 ControlChange generateChannel generateControllerNumber generateVelocity
+    Random.map3 Midi.ControlChange generateChannel generateControllerNumber generateVelocity
 
 
-generateProgramChange : Generator MidiEvent
+generateProgramChange : Random.Generator Midi.Event
 generateProgramChange =
-    Random.map2 ProgramChange generateChannel generateVelocity
+    Random.map2 Midi.ProgramChange generateChannel generateVelocity
 
 
-generateChannelAfterTouch : Generator MidiEvent
+generateChannelAfterTouch : Random.Generator Midi.Event
 generateChannelAfterTouch =
-    Random.map2 ChannelAfterTouch generateChannel generateVelocity
+    Random.map2 Midi.ChannelAfterTouch generateChannel generateVelocity
 
 
-generatePitchBend : Generator MidiEvent
+generatePitchBend : Random.Generator Midi.Event
 generatePitchBend =
-    Random.map2 PitchBend generateChannel (Random.int 0 16383)
+    Random.map2 Midi.PitchBend generateChannel (Random.int 0 16383)
 
 
 fuzzSysExByte : Fuzzer Byte
 fuzzSysExByte =
-    intRange 0 127
+    Fuzz.intRange 0 127
 
 
-generateSysExByte : Generator Byte
+generateSysExByte : Random.Generator Byte
 generateSysExByte =
     Random.int 0 127
 
 
-generateByte : Generator Byte
+generateByte : Random.Generator Byte
 generateByte =
     Random.int 0 255
 
@@ -158,33 +156,33 @@ nonEmptyList : Fuzzer a -> Fuzzer (List a)
 nonEmptyList fuzzer =
     Fuzz.andThen
         (listOfLength fuzzer)
-        (intRange 1 32)
+        (Fuzz.intRange 1 32)
 
 
-fuzzSysExEvent : Fuzzer MidiEvent
+fuzzSysExEvent : Fuzzer Midi.Event
 fuzzSysExEvent =
     Fuzz.map
-        (\xs -> SysEx F0 xs)
+        (\xs -> Midi.SysEx F0 xs)
         (Fuzz.list fuzzSysExByte)
 
 
-generateSysExFileEvent : Generator MidiEvent
+generateSysExFileEvent : Random.Generator Midi.Event
 generateSysExFileEvent =
     let
-        unescaped : Generator MidiEvent
+        unescaped : Random.Generator Midi.Event
         unescaped =
             Random.map
-                (SysEx F0)
+                (Midi.SysEx F0)
                 (Random.andThen
                     (\nBytes -> Random.list nBytes generateSysExByte)
                     -- NOTE: The parser blows the stack if this is 2048.
                     (Random.int 0 204)
                 )
 
-        escaped : Generator MidiEvent
+        escaped : Random.Generator Midi.Event
         escaped =
             Random.map
-                (SysEx F7)
+                (Midi.SysEx F7)
                 (Random.andThen
                     (\nBytes -> Random.list nBytes generateByte)
                     -- NOTE: The parser blows the stack if this is 2048.
@@ -195,7 +193,7 @@ generateSysExFileEvent =
         [ unescaped, escaped ]
 
 
-commonEvents : List (Fuzzer MidiEvent)
+commonEvents : List (Fuzzer Midi.Event)
 commonEvents =
     [ fuzzNoteOn
     , fuzzNoteOff
@@ -206,7 +204,7 @@ commonEvents =
     ]
 
 
-commonEventGenerators : List (Generator MidiEvent)
+commonEventGenerators : List (Random.Generator Midi.Event)
 commonEventGenerators =
     [ generateNoteOn
     , generateNoteOff
@@ -217,7 +215,7 @@ commonEventGenerators =
     ]
 
 
-fuzzMidiEvent : Fuzzer MidiEvent
+fuzzMidiEvent : Fuzzer Midi.Event
 fuzzMidiEvent =
     Fuzz.oneOf <|
         commonEvents
@@ -229,12 +227,12 @@ fuzzMidiEvent =
 -- and not MIDI file events (like in generateTrack).
 
 
-fuzzMidiEventSequence : Fuzzer (List ( Ticks, MidiEvent ))
+fuzzMidiEventSequence : Fuzzer (List ( Midi.Ticks, Midi.Event ))
 fuzzMidiEventSequence =
     Fuzz.list (Fuzz.map2 (,) (intRange 0 0x0FFFFFFF) fuzzMidiEvent)
 
 
-generateTrack : Generator Track
+generateTrack : Random.Generator Midi.Track
 generateTrack =
     Random.andThen
         (\numEvents -> Random.list numEvents generateMidiMessage)
@@ -247,17 +245,17 @@ generateTrack =
         )
 
 
-generateMidiFileEvent : Generator MidiEvent
+generateMidiFileEvent : Random.Generator Midi.Event
 generateMidiFileEvent =
     Random.choices (generateSysExFileEvent :: commonEventGenerators)
 
 
-generateMidiMessage : Generator MidiMessage
+generateMidiMessage : Random.Generator MidiMessage
 generateMidiMessage =
     Random.pair (Random.int 0 0x0FFFFFFF) generateMidiFileEvent
 
 
-generateMidiRecording : Generator MidiRecording
+generateMidiRecording : Random.Generator MidiRecording
 generateMidiRecording =
     let
         generateSingleTrack =
@@ -281,8 +279,8 @@ generateMidiRecording =
 
         generators =
             [ generateSingleTrack
-            , generateMultipleTracks Simultaneous
-            , generateMultipleTracks Independent
+            , generateMultipleTracks Midi.Simultaneous
+            , generateMultipleTracks Midi.Independent
             ]
     in
     Random.choices generators
@@ -293,7 +291,7 @@ shrinkMidiMessage =
     Shrink.noShrink
 
 
-shrinkMidiTrack : Shrinker Track
+shrinkMidiTrack : Shrinker Midi.Track
 shrinkMidiTrack =
     Shrink.list shrinkMidiMessage
 
@@ -340,8 +338,8 @@ toFileEvent event =
     case event of
         -- Note we need to add in the EOX byte when storing
         -- sysex messages in a MIDI file.
-        SysEx F0 bytes ->
-            SysEx F0 (bytes ++ [ eox ])
+        Midi.SysEx F0 bytes ->
+            Midi.SysEx F0 (bytes ++ [ eox ])
 
         _ ->
             event
@@ -369,10 +367,10 @@ suite =
             \( channel, note ) ->
                 let
                     noteOn =
-                        NoteOn channel note 0
+                        Midi.NoteOn channel note 0
 
                     noteOff =
-                        NoteOff channel note 0
+                        Midi.NoteOff channel note 0
                 in
                 Expect.equal
                     (Parse.event (toByteString (Generate.event noteOn)))
