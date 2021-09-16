@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "newlandsvalley/elm-comidi",
-    "summary": "library for parsing MIDI files",
+    "summary": "Package for handling MIDI files.",
     "license": "BSD-3-Clause",
     "version": "3.0.0",
     "exposed-modules": [
