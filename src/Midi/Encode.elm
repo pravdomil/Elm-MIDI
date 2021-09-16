@@ -148,16 +148,10 @@ event a =
         Midi.SequencerSpecific _ ->
             Err (NotSupported "SequencerSpecific")
 
-        Midi.SysEx bytes ->
-            Ok
-                [ Encode.unsignedInt8 0xF0
-                , Encode.bytes bytes
-                , Encode.unsignedInt8 0xF7
-                ]
-
         Midi.Unspecified _ _ ->
             Err (NotSupported "Unspecified")
 
+        --
         Midi.NoteOff channel note velocity ->
             Ok
                 [ Encode.unsignedInt8 (0x80 + channel)
@@ -212,6 +206,14 @@ event a =
                 [ Encode.unsignedInt8 (0xE0 + channel)
                 , Encode.unsignedInt8 lower
                 , Encode.unsignedInt8 upper
+                ]
+
+        --
+        Midi.SysEx bytes ->
+            Ok
+                [ Encode.unsignedInt8 0xF0
+                , Encode.bytes bytes
+                , Encode.unsignedInt8 0xF7
                 ]
     )
         |> Result.map (Encode.sequence >> Encode.encode)
