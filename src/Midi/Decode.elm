@@ -621,6 +621,11 @@ notTrackEnd =
 -- Helpers
 
 
+endianness : Bytes.Endianness
+endianness =
+    Bytes.BE
+
+
 decodeConst : String -> Decoder ()
 decodeConst a =
     Decode.string (String.length a)
