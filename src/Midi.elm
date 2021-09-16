@@ -147,10 +147,10 @@ endOfExclusive =
 Verifies multipart sysex messages.
 -}
 isValidRecording : MidiRecording -> Bool
-isValidRecording r =
+isValidRecording a =
     let
-        validTrack multipart track =
-            case track of
+        validTrack multipart b =
+            case b of
                 -- All multipart messages must be finished.
                 [] ->
                     not multipart
@@ -189,7 +189,7 @@ isValidRecording r =
                         _ ->
                             validTrack multipart ts
     in
-    case r of
+    case a of
         SingleTrack _ t ->
             validTrack False t
 
