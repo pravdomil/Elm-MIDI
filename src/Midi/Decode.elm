@@ -9,27 +9,6 @@ module Midi.Decode exposing (normalise, file, event)
 import Parser exposing (Parser)
 
 
-varInt : Parser Int
-varInt =
-    let
-        helper : Parser (List Int)
-        helper =
-            uInt8
-                >>= (\n ->
-                        if n < 128 then
-                            succeed [ n ]
-
-                        else
-                            (::) (and 127 n) <$> helper
-                    )
-    in
-    List.foldl (\n -> \acc -> shiftLeftBy 7 acc + n) 0 <$> helper
-
-
-
--- top level parsers
-
-
 midi : Parser MidiRecording
 midi =
     midiHeader
@@ -708,6 +687,23 @@ normalise =
 
 
 -- Helpers
+
+
+varInt : Parser Int
+varInt =
+    let
+        helper : Parser (List Int)
+        helper =
+            uInt8
+                >>= (\n ->
+                        if n < 128 then
+                            succeed [ n ]
+
+                        else
+                            (::) (and 127 n) <$> helper
+                    )
+    in
+    List.foldl (\n -> \acc -> shiftLeftBy 7 acc + n) 0 <$> helper
 
 
 {-| Parse an 8 bit integer lying within a range.
