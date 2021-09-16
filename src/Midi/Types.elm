@@ -20,8 +20,6 @@ module Midi.Types exposing
 
 -}
 
-import List exposing (..)
-
 
 {-| Midi Tick
 
