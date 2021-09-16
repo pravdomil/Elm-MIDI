@@ -217,7 +217,7 @@ metaEvent =
 
 
 
---
+-- Meta Events
 
 
 sequenceNumberEvent : Decoder Midi.Event
@@ -312,6 +312,10 @@ sequencerSpecificEvent =
     SequencerSpecific <$> parseMetaBytes 0x7F <?> "sequencer specific"
 
 
+
+-- SysEx Events
+
+
 {-| A SysEx event is introduced by an 0xF0 byte and is followed by an array of bytes.
 In Web Midi a sysex event starts with a 0xF0 byte and ends with an EOX (0xF7) byte.
 There are also escaped SysEx messages, but these are only found in MIDI files.
@@ -396,7 +400,7 @@ trackEndMessage =
 
 
 
--- Channel Parsers
+-- Control Events
 
 
 noteOffEvent : Decoder Midi.Event
