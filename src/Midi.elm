@@ -144,8 +144,8 @@ isValidRecording : Recording -> Bool
 isValidRecording (Recording _ a b) =
     let
         validTrack : Bool -> List Message -> Bool
-        validTrack multipart b =
-            case b of
+        validTrack multipart c =
+            case c of
                 -- All multipart messages must be finished.
                 [] ->
                     not multipart
