@@ -56,7 +56,9 @@ type alias Track =
 {-| MIDI message.
 -}
 type alias Message =
-    ( Ticks, Event )
+    { delta : Ticks
+    , event : Event
+    }
 
 
 {-| MIDI tick (elapsed time).
