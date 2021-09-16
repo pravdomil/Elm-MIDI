@@ -1,4 +1,4 @@
-module Midi.Generate exposing (event, recording)
+module Midi.Encode exposing (event, recording)
 
 {-| Module for encoding MIDI types as "binary"
 

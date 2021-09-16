@@ -1,4 +1,4 @@
-module Midi.Parse exposing (normalise, file, event)
+module Midi.Decode exposing (normalise, file, event)
 
 {-| Module for parsing MIDI files
 
