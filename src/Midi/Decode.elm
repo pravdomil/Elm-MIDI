@@ -127,33 +127,33 @@ eventDecoder parent =
     Decode.unsignedInt8
         |> Decode.andThen
             (\v ->
-                case ( v, bitwiseClear 0x0F v ) of
-                    ( 0xFF, _ ) ->
-                        metaEvent
-
-                    ( 0xF0, _ ) ->
-                        sysExEvent
-
-                    ( _, 0x80 ) ->
+                case ( bitwiseClear 0x0F v, v ) of
+                    ( 0x80, _ ) ->
                         noteOffEvent
 
-                    ( _, 0x90 ) ->
+                    ( 0x90, _ ) ->
                         noteOnEvent
 
-                    ( _, 0xA0 ) ->
+                    ( 0xA0, _ ) ->
                         noteAfterTouchEvent
 
-                    ( _, 0xB0 ) ->
+                    ( 0xB0, _ ) ->
                         controlChangeEvent
 
-                    ( _, 0xC0 ) ->
+                    ( 0xC0, _ ) ->
                         programChangeEvent
 
-                    ( _, 0xD0 ) ->
+                    ( 0xD0, _ ) ->
                         channelAfterTouchEvent
 
-                    ( _, 0xE0 ) ->
+                    ( 0xE0, _ ) ->
                         pitchBendEvent
+
+                    ( _, 0xFF ) ->
+                        metaEvent
+
+                    ( _, 0xF0 ) ->
+                        sysExEvent
 
                     _ ->
                         runningStatusEvent (Maybe.map .event parent)
