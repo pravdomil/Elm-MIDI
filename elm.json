@@ -1,6 +1,6 @@
 {
     "type": "package",
-    "name": "newlandsvalley/elm-comidi",
+    "name": "foo/bar",
     "summary": "Package for handling MIDI files.",
     "license": "BSD-3-Clause",
     "version": "3.0.0",
