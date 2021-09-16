@@ -163,7 +163,7 @@ nonEmptyList fuzzer =
 fuzzSysExEvent : Fuzzer Midi.Event
 fuzzSysExEvent =
     Fuzz.map
-        (\xs -> Midi.SysEx F0 xs)
+        (\xs -> Midi.SysEx xs)
         (Fuzz.list fuzzSysExByte)
 
 
@@ -173,7 +173,7 @@ generateSysExFileEvent =
         unescaped : Random.Generator Midi.Event
         unescaped =
             Random.map
-                (Midi.SysEx F0)
+                Midi.SysEx
                 (Random.andThen
                     (\nBytes -> Random.list nBytes generateSysExByte)
                     -- NOTE: The parser blows the stack if this is 2048.
@@ -183,7 +183,7 @@ generateSysExFileEvent =
         escaped : Random.Generator Midi.Event
         escaped =
             Random.map
-                (Midi.SysEx F7)
+                Midi.SysEx
                 (Random.andThen
                     (\nBytes -> Random.list nBytes generateByte)
                     -- NOTE: The parser blows the stack if this is 2048.
@@ -341,8 +341,8 @@ toFileEvent event =
     case event of
         -- Note we need to add in the EOX byte when storing
         -- sysex messages in a MIDI file.
-        Midi.SysEx F0 bytes ->
-            Midi.SysEx F0 (bytes ++ [ eox ])
+        Midi.SysEx bytes ->
+            Midi.SysEx (bytes ++ [ eox ])
 
         _ ->
             event
