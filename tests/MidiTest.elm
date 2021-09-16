@@ -200,6 +200,7 @@ commonEvents =
     , fuzzNoteAfterTouch
     , fuzzControlChange
     , fuzzProgramChange
+    , fuzzChannelAfterTouch
     , fuzzPitchBend
     ]
 
@@ -211,6 +212,7 @@ commonEventGenerators =
     , generateNoteAfterTouch
     , generateControlChange
     , generateProgramChange
+    , generateChannelAfterTouch
     , generatePitchBend
     ]
 
