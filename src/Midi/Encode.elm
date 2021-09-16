@@ -130,6 +130,9 @@ event a =
         Midi.ChannelPrefix _ ->
             Err (NotSupported "ChannelPrefix")
 
+        Midi.EndOfTrack ->
+            Ok []
+
         Midi.Tempo _ ->
             Err (NotSupported "Tempo")
 

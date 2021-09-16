@@ -78,6 +78,7 @@ type Event
     | Marker String
     | CuePoint String
     | ChannelPrefix Int
+    | EndOfTrack
     | Tempo Int
     | SMPTEOffset Int Int Int Int Int
     | TimeSignature Int Int Int Int
@@ -93,8 +94,6 @@ type Event
     | ProgramChange Channel Int
     | ChannelAfterTouch Channel Velocity
     | PitchBend Channel Int
-      -- Other
-    | EndOfTrack
 
 
 {-| MIDI channel.
