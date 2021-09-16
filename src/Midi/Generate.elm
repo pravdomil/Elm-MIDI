@@ -17,8 +17,8 @@ import Midi.Types exposing (..)
 {-| Generate a MIDI event
 -}
 event : MidiEvent -> List Byte
-event event =
-    case event of
+event a =
+    case a of
         SysEx F0 bytes ->
             0xF0 :: (bytes ++ [ eox ])
 
