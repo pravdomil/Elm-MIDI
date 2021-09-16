@@ -220,11 +220,6 @@ metaEvent =
 --
 
 
-endOfTrackEvent : Decoder Midi.Event
-endOfTrackEvent =
-    bChar 0x2F *> bChar 0x00 *> succeed Nothing <?> "sequence number"
-
-
 sequenceNumberEvent : Decoder Midi.Event
 sequenceNumberEvent =
     SequenceNumber <$> (bChar 0x00 *> bChar 0x02 *> uInt16 <?> "sequence number")
@@ -285,6 +280,11 @@ cuePointEvent =
 channelPrefixEvent : Decoder Midi.Event
 channelPrefixEvent =
     ChannelPrefix <$> (bChar 0x20 *> bChar 0x01 *> uInt8 <?> "channel prefix")
+
+
+endOfTrackEvent : Decoder Midi.Event
+endOfTrackEvent =
+    bChar 0x2F *> bChar 0x00 *> succeed Nothing <?> "sequence number"
 
 
 tempoEvent : Decoder Midi.Event
