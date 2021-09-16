@@ -48,7 +48,7 @@ type alias Header =
 -}
 midiHeader : Decoder Header
 midiHeader =
-    string "MThd"
+    decodeConst "MThd"
         *> (let
                 h =
                     headerChunk <$> uInt32 <*> uInt16 <*> uInt16 <*> uInt16
@@ -85,7 +85,7 @@ has no parent (antecedent).
 -}
 midiTrack : Decoder Track
 midiTrack =
-    string "MTrk" *> uInt32 *> midiMessages Nothing <?> "midi track"
+    decodeConst "MTrk" *> uInt32 *> midiMessages Nothing <?> "midi track"
 
 
 midiMessages : Maybe Midi.Event -> Decoder (List MidiMessage)
@@ -620,3 +620,20 @@ notTrackEnd =
             fromCode 0x2F
     in
     toCode <$> noneOf [ c ]
+
+
+
+--
+
+
+decodeConst : String -> Decoder ()
+decodeConst a =
+    Decode.string (String.length a)
+        |> Decode.andThen
+            (\v ->
+                if v == a then
+                    Decode.succeed ()
+
+                else
+                    Decode.fail
+            )
