@@ -9,26 +9,6 @@ module Midi.Decode exposing (normalise, file, event)
 import Parser exposing (Parser)
 
 
-{-| Parse an 8 bit integer lying within a range.
--}
-bRange : Int -> Int -> Parser Int
-bRange l r =
-    let
-        f a =
-            toCode a >= l && toCode a <= r
-    in
-    toCode <$> satisfy f
-
-
-notTrackEnd : Parser Int
-notTrackEnd =
-    let
-        c =
-            fromCode 0x2F
-    in
-    toCode <$> noneOf [ c ]
-
-
 
 -- fixed length integers
 
@@ -768,3 +748,27 @@ normalise =
             toCode >> and 0xFF >> fromCode
     in
     String.toList >> List.map f >> String.fromList
+
+
+
+-- Helpers
+
+
+{-| Parse an 8 bit integer lying within a range.
+-}
+bRange : Int -> Int -> Parser Int
+bRange l r =
+    let
+        f a =
+            toCode a >= l && toCode a <= r
+    in
+    toCode <$> satisfy f
+
+
+notTrackEnd : Parser Int
+notTrackEnd =
+    let
+        c =
+            fromCode 0x2F
+    in
+    toCode <$> noneOf [ c ]
