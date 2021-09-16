@@ -24,7 +24,8 @@ module Midi exposing
 -}
 
 
-{-| Midi recording.
+
+{-| MIDI recording.
 -}
 type alias Recording =
     { type_ : TrackType
@@ -47,7 +48,7 @@ type TrackType
     | Independent
 
 
-{-| Midi track.
+{-| MIDI track.
 -}
 type alias Track =
     List Message
@@ -57,19 +58,19 @@ type alias Track =
 --
 
 
-{-| Midi message.
+{-| MIDI message.
 -}
 type alias Message =
     ( Ticks, Event )
 
 
-{-| Midi tick (elapsed time).
+{-| MIDI tick (elapsed time).
 -}
 type alias Ticks =
     Int
 
 
-{-| Midi event.
+{-| MIDI event.
 
 Note that RunningStatus messages are not included within MidiEvent
 because the parser translates them to the underlying channel messages.
@@ -103,19 +104,19 @@ type Event
     | PitchBend Channel Int
 
 
-{-| Midi channel.
+{-| MIDI channel.
 -}
 type alias Channel =
     Int
 
 
-{-| Midi note.
+{-| MIDI note.
 -}
 type alias Note =
     Int
 
 
-{-| Midi velocity (volume).
+{-| MIDI velocity (volume).
 -}
 type alias Velocity =
     Int
