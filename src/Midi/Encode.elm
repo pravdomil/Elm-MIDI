@@ -1,9 +1,6 @@
 module Midi.Encode exposing (event, recording)
 
-{-| Module for encoding MIDI types as "binary"
-
-
-# API Reference
+{-| Module for encoding MIDI.
 
 @docs event, recording
 
