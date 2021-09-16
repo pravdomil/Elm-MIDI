@@ -14,8 +14,8 @@ import Midi
 {-| Decode MIDI file.
 -}
 file : Bytes -> Result String Midi.File
-file s =
-    case Combine.parse fileDecoder s of
+file a =
+    case Combine.parse fileDecoder a of
         Ok ( _, _, n ) ->
             Ok n
 
