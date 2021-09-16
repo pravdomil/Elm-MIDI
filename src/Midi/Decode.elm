@@ -1,13 +1,54 @@
-module Midi.Decode exposing (normalise, file, event)
+module Midi.Decode exposing (file, event, normalise)
 
 {-| Module for decoding MIDI.
 
-@docs normalise, file, event
+@docs file, event, normalise
 
 -}
 
 import Midi
 import Parser exposing (Parser)
+
+
+{-| Parse a normalised MIDI file image.
+-}
+file : String -> Result String MidiRecording
+file s =
+    case Combine.parse midi s of
+        Ok ( _, _, n ) ->
+            Ok n
+
+        Err ( _, ctx, ms ) ->
+            Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
+
+
+{-| Parse a MIDI event.
+-}
+event : String -> Result String Midi.Event
+event s =
+    case Combine.parse (midiEvent Nothing) s of
+        Ok ( _, _, n ) ->
+            Ok n
+
+        Err ( _, ctx, ms ) ->
+            Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
+
+
+{-| Normalise the input before we parse by masking off all but the least
+significant 8 bits. We assume the string contains only bytes so this
+should be a no-op.
+-}
+normalise : String -> String
+normalise =
+    let
+        f =
+            toCode >> and 0xFF >> fromCode
+    in
+    String.toList >> List.map f >> String.fromList
+
+
+
+--
 
 
 midi : Parser Midi.Recording
@@ -558,47 +599,6 @@ consumeOverspill actual expected =
 makeTuple : a -> b -> ( a, b )
 makeTuple a b =
     ( a, b )
-
-
-
--- Exported Functions
-
-
-{-| Parse a MIDI event.
--}
-event : String -> Result String Midi.Event
-event s =
-    case Combine.parse (midiEvent Nothing) s of
-        Ok ( _, _, n ) ->
-            Ok n
-
-        Err ( _, ctx, ms ) ->
-            Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
-
-
-{-| Parse a normalised MIDI file image.
--}
-file : String -> Result String MidiRecording
-file s =
-    case Combine.parse midi s of
-        Ok ( _, _, n ) ->
-            Ok n
-
-        Err ( _, ctx, ms ) ->
-            Err ("parse error: " ++ toString ms ++ ", " ++ toString ctx)
-
-
-{-| Normalise the input before we parse by masking off all but the least
-significant 8 bits. We assume the string contains only bytes so this
-should be a no-op.
--}
-normalise : String -> String
-normalise =
-    let
-        f =
-            toCode >> and 0xFF >> fromCode
-    in
-    String.toList >> List.map f >> String.fromList
 
 
 
