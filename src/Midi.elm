@@ -1,4 +1,4 @@
-module Midi.Types exposing
+module Midi exposing
     ( Track, MidiEvent(..), MidiMessage, TracksType(..), MidiRecording(..), Byte, Channel
     , Note, Velocity, SysExFlavour(..), Ticks
     , eox, validRecording
