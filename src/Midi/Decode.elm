@@ -31,53 +31,39 @@ event a =
 
 fileDecoder : Decoder Midi.File
 fileDecoder =
-    midiHeader
-        |> andThen midiTracks
-
-
-{-| An internal representation of the header which includes the track count.
--}
-type alias Header =
-    { formatType : Int
-    , trackCount : Int
-    , ticksPerBeat : Int
-    }
-
-
-{-| Parser for headers which quietly eats any extra bytes if we have a non-standard chunk size.
--}
-midiHeader : Decoder Header
-midiHeader =
     decodeConst "MThd"
-        *> (let
-                h =
-                    headerChunk <$> uInt32 <*> uInt16 <*> uInt16 <*> uInt16
-            in
-            consumeOverspill h 6
-                <?> "header"
-           )
+        |> Decode.andThen
+            (\_ ->
+                decodeBlock 6
+                    (Decode.map3
+                        (\v1 v2 v3 ->
+                            { trackType = v1
+                            , trackCount = v2
+                            , tempo = v3
+                            }
+                        )
+                        (Decode.unsignedInt16 endianness)
+                        (Decode.unsignedInt16 endianness)
+                        (Decode.unsignedInt16 endianness)
+                    )
+            )
+        |> Decode.andThen
+            (\v ->
+                case v.trackType of
+                    0 ->
+                        tracksDecoder |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
+
+                    1 ->
+                        tracksDecoder |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
+
+                    2 ->
+                        tracksDecoder |> Decode.map (Midi.File v.tempo Midi.Independent)
+
+                    _ ->
+                        Decode.fail
+            )
 
 
-midiTracks : Header -> Decoder MidiRecording
-midiTracks h =
-    case h.formatType of
-        0 ->
-            if h.trackCount == 1 then
-                SingleTrack h.ticksPerBeat <$> midiTrack <?> "midi track for single track file"
-
-            else
-                fail ("Single track file with " ++ toString h.trackCount ++ " tracks.")
-
-        1 ->
-            MultipleTracks Simultaneous h.ticksPerBeat
-                <$> (count h.trackCount midiTrack <?> "midi track for simultaneous tracks file")
-
-        2 ->
-            MultipleTracks Independent h.ticksPerBeat
-                <$> (count h.trackCount midiTrack <?> "midi track for independent tracks file")
-
-        f ->
-            fail ("Unknown MIDI file format " ++ toString f)
 
 
 {-| We pass Nothing to midiMessages because the very first message
@@ -451,11 +437,6 @@ eventRunningStatus parent =
 
         _ ->
             fail "no parent for running status"
-
-
-headerChunk : Int -> Int -> Int -> Int -> ( Int, Header )
-headerChunk l a b c =
-    ( l, Header a b c )
 
 
 {-| Build NoteOn (unless the velocity is zero in which case NoteOff).
