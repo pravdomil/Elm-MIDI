@@ -25,10 +25,8 @@ type alias Header =
     }
 
 
-
-{- parser for headers which quietly eats any extra bytes if we have a non-standard chunk size -}
-
-
+{-| Parser for headers which quietly eats any extra bytes if we have a non-standard chunk size.
+-}
 midiHeader : Parser Header
 midiHeader =
     string "MThd"
