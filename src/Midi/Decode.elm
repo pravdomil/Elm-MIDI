@@ -1,9 +1,6 @@
 module Midi.Decode exposing (normalise, file, event)
 
-{-| Module for parsing MIDI files
-
-
-# API Reference
+{-| Module for decoding MIDI.
 
 @docs normalise, file, event
 
