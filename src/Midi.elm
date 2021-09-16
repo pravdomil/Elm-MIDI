@@ -1,8 +1,9 @@
 module Midi exposing
     ( Recording(..), TrackType(..), Track
-    , MidiMessage, Ticks, MidiEvent(..)
+    , Ticks, MidiEvent(..)
     , Channel, Note, Velocity, SysExFlavour(..)
     , endOfExclusive, isValidRecording
+    , Message
     )
 
 {-| Type definitions for MIDI.
@@ -41,16 +42,16 @@ type TrackType
 {-| Midi track.
 -}
 type alias Track =
-    List MidiMessage
+    List Message
 
 
 
 --
 
 
-{-| Midi Message
+{-| Midi message.
 -}
-type alias MidiMessage =
+type alias Message =
     ( Ticks, MidiEvent )
 
 
@@ -144,7 +145,7 @@ Verifies multipart sysex messages.
 isValidRecording : Recording -> Bool
 isValidRecording (Recording _ a b) =
     let
-        validTrack : Bool -> List MidiMessage -> Bool
+        validTrack : Bool -> List Message -> Bool
         validTrack multipart b =
             case b of
                 -- All multipart messages must be finished.
