@@ -574,11 +574,6 @@ consumeOverspill actual expected =
             )
 
 
-makeTuple : a -> b -> ( a, b )
-makeTuple a b =
-    ( a, b )
-
-
 
 -- Helpers
 
