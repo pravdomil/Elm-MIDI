@@ -51,28 +51,28 @@ fileDecoder =
             (\v ->
                 case v.format of
                     0 ->
-                        tracksDecoder v.trackCount |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
+                        tracks v.trackCount |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
 
                     1 ->
-                        tracksDecoder v.trackCount |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
+                        tracks v.trackCount |> Decode.map (Midi.File v.tempo Midi.Simultaneous)
 
                     2 ->
-                        tracksDecoder v.trackCount |> Decode.map (Midi.File v.tempo Midi.Independent)
+                        tracks v.trackCount |> Decode.map (Midi.File v.tempo Midi.Independent)
 
                     _ ->
                         Decode.fail
             )
 
 
-tracksDecoder : Int -> Decoder ( Midi.Track, List Midi.Track )
-tracksDecoder trackCount =
+tracks : Int -> Decoder ( Midi.Track, List Midi.Track )
+tracks trackCount =
     Decode.loop ( 0, [] )
         (\( i, acc ) ->
             if i == trackCount then
                 Decode.succeed (Decode.Done (List.reverse acc))
 
             else
-                trackDecoder
+                track
                     |> Decode.map
                         (\v ->
                             Decode.Loop ( i + 1, v :: acc )
@@ -89,15 +89,15 @@ tracksDecoder trackCount =
             )
 
 
-trackDecoder : Decoder Midi.Track
-trackDecoder =
+track : Decoder Midi.Track
+track =
     decodeConst "MTrk"
         |> Decode.andThen (\_ -> Decode.unsignedInt32 endianness)
-        |> Decode.andThen (\_ -> messagesDecoder Nothing)
+        |> Decode.andThen (\_ -> messages Nothing)
 
 
-messagesDecoder : Maybe Midi.Event -> Decoder (List Midi.Message)
-messagesDecoder parent =
+messages : Maybe Midi.Event -> Decoder (List Midi.Message)
+messages parent =
     midiMessage parent
         >>= continueOrNot
 
@@ -110,7 +110,7 @@ continueOrNot maybeLastMessage =
     case maybeLastMessage of
         ( ticks, Just lastEvent ) ->
             (::) ( ticks, lastEvent )
-                <$> messagesDecoder (Just lastEvent)
+                <$> messages (Just lastEvent)
 
         ( _, Nothing ) ->
             succeed []
