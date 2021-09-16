@@ -159,7 +159,7 @@ isValidRecording a =
                 t :: ts ->
                     case ( t, multipart ) of
                         ( ( _, SysEx F0 data ), False ) ->
-                            case head (reverse data) of
+                            case List.head (List.reverse data) of
                                 Just eox ->
                                     validTrack False ts
 
@@ -172,7 +172,7 @@ isValidRecording a =
                             False
 
                         ( ( _, SysEx F7 data ), True ) ->
-                            case head (reverse data) of
+                            case List.head (List.reverse data) of
                                 Just eox ->
                                     validTrack False ts
 
@@ -195,4 +195,4 @@ isValidRecording a =
             validTrack False b
 
         MultipleTracks _ _ b ->
-            all (validTrack False) b
+            List.all (validTrack False) b
