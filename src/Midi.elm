@@ -143,11 +143,11 @@ endOfExclusive =
     0xF7
 
 
-{-| Returns true if a MidiRecording is valid.
-Currently this involves verifying multipart sysex messages are broken up correctly.
+{-| Checks if MidiRecording is valid.
+Verifies multipart sysex messages.
 -}
-validRecording : MidiRecording -> Bool
-validRecording r =
+isValidRecording : MidiRecording -> Bool
+isValidRecording r =
     let
         validTrack multipart track =
             case track of
