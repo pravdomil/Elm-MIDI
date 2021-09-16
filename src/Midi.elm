@@ -1,5 +1,5 @@
 module Midi exposing
-    ( Recording(..), TrackType(..), Track
+    ( Recording, TrackType(..), Track
     , Message, Ticks, Event(..)
     , Channel, Note, Velocity
     , isValidRecording
@@ -26,8 +26,17 @@ module Midi exposing
 
 {-| Midi recording.
 -}
-type Recording
-    = Recording Int Track (List Track)
+type alias Recording =
+    { type_ : TrackType
+    , ticks : TicksPerBeat
+    , tracks : ( Track, List Track )
+    }
+
+
+{-| Ticks per beat.
+-}
+type alias TicksPerBeat =
+    Int
 
 
 {-| Distinguish between track type.
