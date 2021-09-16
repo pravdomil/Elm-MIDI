@@ -9,11 +9,8 @@ module Midi.Decode exposing (normalise, file, event)
 import Parser exposing (Parser)
 
 
-
--- bchar val = log "bchar" <$> ( toCode <$> char (fromCode(val)))
-{- parse an 8 bit integer lying within a range -}
-
-
+{-| Parse an 8 bit integer lying within a range.
+-}
 bRange : Int -> Int -> Parser Int
 bRange l r =
     let
