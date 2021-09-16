@@ -226,6 +226,7 @@ endianness =
 varInt : Int -> Encode.Encoder
 varInt a =
     let
+        helper : Int -> List Int -> List Int
         helper b bytes =
             if b < 128 then
                 (b + 128) :: bytes
@@ -235,11 +236,14 @@ varInt a =
                     (Bitwise.shiftRightBy 7 b)
                     ((128 + Bitwise.and 127 b) :: bytes)
     in
-    if a < 128 then
+    (if a < 128 then
         [ a ]
 
-    else
+     else
         helper (Bitwise.shiftRightBy 7 a) [ Bitwise.and 127 a ]
+    )
+        |> List.map Encode.signedInt8
+        |> Encode.sequence
 
 
 resultSequence : List (Result x a) -> Result x (List a)
