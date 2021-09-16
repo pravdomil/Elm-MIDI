@@ -13,7 +13,7 @@ import Midi
 
 
 type Error
-    = NotSupported String
+    = NotSupportedEvent String
 
 
 {-| Encode MIDI file.
@@ -104,52 +104,52 @@ event : Midi.Event -> Result Error Bytes
 event a =
     (case a of
         Midi.SequenceNumber _ ->
-            Err (NotSupported "SequenceNumber")
+            Err (NotSupportedEvent "SequenceNumber")
 
         Midi.Text _ ->
-            Err (NotSupported "Text")
+            Err (NotSupportedEvent "Text")
 
         Midi.Copyright _ ->
-            Err (NotSupported "Copyright")
+            Err (NotSupportedEvent "Copyright")
 
         Midi.TrackName _ ->
-            Err (NotSupported "TrackName")
+            Err (NotSupportedEvent "TrackName")
 
         Midi.InstrumentName _ ->
-            Err (NotSupported "InstrumentName")
+            Err (NotSupportedEvent "InstrumentName")
 
         Midi.Lyrics _ ->
-            Err (NotSupported "Lyrics")
+            Err (NotSupportedEvent "Lyrics")
 
         Midi.Marker _ ->
-            Err (NotSupported "Marker")
+            Err (NotSupportedEvent "Marker")
 
         Midi.CuePoint _ ->
-            Err (NotSupported "CuePoint")
+            Err (NotSupportedEvent "CuePoint")
 
         Midi.ChannelPrefix _ ->
-            Err (NotSupported "ChannelPrefix")
+            Err (NotSupportedEvent "ChannelPrefix")
 
         Midi.EndOfTrack ->
             Ok []
 
         Midi.Tempo _ ->
-            Err (NotSupported "Tempo")
+            Err (NotSupportedEvent "Tempo")
 
         Midi.SMPTEOffset _ _ _ _ _ ->
-            Err (NotSupported "SMPTEOffset")
+            Err (NotSupportedEvent "SMPTEOffset")
 
         Midi.TimeSignature _ _ _ _ ->
-            Err (NotSupported "TimeSignature")
+            Err (NotSupportedEvent "TimeSignature")
 
         Midi.KeySignature _ _ ->
-            Err (NotSupported "KeySignature")
+            Err (NotSupportedEvent "KeySignature")
 
         Midi.SequencerSpecific _ ->
-            Err (NotSupported "SequencerSpecific")
+            Err (NotSupportedEvent "SequencerSpecific")
 
         Midi.Unknown _ _ ->
-            Err (NotSupported "Unknown")
+            Err (NotSupportedEvent "Unknown")
 
         --
         Midi.NoteOff channel note velocity ->
