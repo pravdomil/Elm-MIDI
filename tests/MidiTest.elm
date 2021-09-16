@@ -253,12 +253,12 @@ generateMidiFileEvent =
     Random.choices (generateSysExFileEvent :: commonEventGenerators)
 
 
-generateMidiMessage : Random.Generator MidiMessage
+generateMidiMessage : Random.Generator Midi.Message
 generateMidiMessage =
     Random.pair (Random.int 0 0x0FFFFFFF) generateMidiFileEvent
 
 
-generateMidiRecording : Random.Generator MidiRecording
+generateMidiRecording : Random.Generator Midi.Recording
 generateMidiRecording =
     let
         generateSingleTrack =
@@ -289,7 +289,7 @@ generateMidiRecording =
     Random.choices generators
 
 
-shrinkMidiMessage : Shrinker MidiMessage
+shrinkMidiMessage : Shrinker Midi.Message
 shrinkMidiMessage =
     Shrink.noShrink
 
@@ -299,7 +299,7 @@ shrinkMidiTrack =
     Shrink.list shrinkMidiMessage
 
 
-shrinkMidiRecordingSameFormat : Shrinker MidiRecording
+shrinkMidiRecordingSameFormat : Shrinker Midi.Recording
 shrinkMidiRecordingSameFormat midi =
     case midi of
         SingleTrack ticksPerBeat track ->
@@ -311,7 +311,7 @@ shrinkMidiRecordingSameFormat midi =
                 |> Shrink.andMap (Shrink.list shrinkMidiTrack tracks)
 
 
-shrinkMidiRecordingChangeFormat : Shrinker MidiRecording
+shrinkMidiRecordingChangeFormat : Shrinker Midi.Recording
 shrinkMidiRecordingChangeFormat midi =
     case midi of
         MultipleTracks tracksType ticksPerBeat ((track :: []) as tracks) ->
@@ -325,7 +325,7 @@ shrinkMidiRecording =
     Shrink.merge shrinkMidiRecordingChangeFormat shrinkMidiRecordingSameFormat
 
 
-fuzzMidiRecording : Fuzzer MidiRecording
+fuzzMidiRecording : Fuzzer Midi.Recording
 fuzzMidiRecording =
     Fuzz.custom
         generateMidiRecording
