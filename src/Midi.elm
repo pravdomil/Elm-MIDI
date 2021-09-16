@@ -84,7 +84,6 @@ type Event
     | TimeSignature Int Int Int Int
     | KeySignature Int Int
     | SequencerSpecific (List Int)
-    | SysEx Bytes
     | Unspecified Int (List Int)
       -- Control
     | NoteOff Channel Note Velocity
@@ -94,6 +93,8 @@ type Event
     | ProgramChange Channel Int
     | ChannelAfterTouch Channel Velocity
     | PitchBend Channel Int
+      -- System Exclusive
+    | SysEx Bytes
 
 
 {-| MIDI channel.
