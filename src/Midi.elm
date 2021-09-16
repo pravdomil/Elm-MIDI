@@ -130,7 +130,7 @@ type alias Velocity =
 -}
 
 
-{-| Checks if MidiRecording is valid.
+{-| Checks if recording is valid.
 Verifies multipart system messages.
 -}
 isValidRecording : Recording -> Bool
