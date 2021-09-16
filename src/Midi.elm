@@ -22,8 +22,8 @@ module Midi exposing
 {-| MIDI recording.
 -}
 type alias Recording =
-    { type_ : TrackType
-    , tempo : TicksPerBeat
+    { tempo : TicksPerBeat
+    , trackType : TrackType
     , tracks : ( Track, List Track )
     }
 
