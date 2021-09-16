@@ -206,41 +206,6 @@ fileEvent e =
 -- Helper functions
 
 
-strToBytes : String -> List Int
-strToBytes =
-    List.map Char.toCode << String.toList
-
-
-uint16 : Int -> List Int
-uint16 x =
-    let
-        b1 =
-            Bitwise.and 255 (Bitwise.shiftRightBy 8 x)
-
-        b2 =
-            Bitwise.and 255 x
-    in
-    [ b1, b2 ]
-
-
-uint32 : Int -> List Int
-uint32 x =
-    let
-        b1 =
-            Bitwise.and 255 (Bitwise.shiftRightBy 24 x)
-
-        b2 =
-            Bitwise.and 255 (Bitwise.shiftRightBy 16 x)
-
-        b3 =
-            Bitwise.and 255 (Bitwise.shiftRightBy 8 x)
-
-        b4 =
-            Bitwise.and 255 x
-    in
-    [ b1, b2, b3, b4 ]
-
-
 varInt : Int -> List Int
 varInt x =
     let
