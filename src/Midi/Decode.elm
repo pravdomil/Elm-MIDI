@@ -157,6 +157,9 @@ eventDecoder parent =
                     ( _, 0xF0 ) ->
                         sysExEvent
 
+                    ( _, 0xF7 ) ->
+                        sysExEvent
+
                     _ ->
                         runningStatusEvent (Maybe.map .event parent)
             )
