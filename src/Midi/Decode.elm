@@ -35,18 +35,20 @@ fileDecoder =
     decodeConst "MThd"
         |> Decode.andThen
             (\_ ->
-                decodeBlock 6
-                    (Decode.map3
-                        (\v1 v2 v3 ->
-                            { format = v1
-                            , trackCount = v2
-                            , tempo = v3
-                            }
-                        )
-                        (Decode.unsignedInt16 endianness)
-                        (Decode.unsignedInt16 endianness)
-                        (Decode.unsignedInt16 endianness)
+                decodeInt 6
+            )
+        |> Decode.andThen
+            (\_ ->
+                Decode.map3
+                    (\v1 v2 v3 ->
+                        { format = v1
+                        , trackCount = v2
+                        , tempo = v3
+                        }
                     )
+                    (Decode.unsignedInt16 endianness)
+                    (Decode.unsignedInt16 endianness)
+                    (Decode.unsignedInt16 endianness)
             )
         |> Decode.andThen
             (\v ->
@@ -628,17 +630,16 @@ endianness =
     Bytes.BE
 
 
-decodeBlock : Int -> Decoder a -> Decoder a
-decodeBlock sizeOfDecoder decoder =
+decodeInt : Int -> Decoder ()
+decodeInt value =
     Decode.unsignedInt32 endianness
         |> Decode.andThen
             (\v ->
-                decoder
-                    |> Decode.andThen
-                        (\vv ->
-                            Decode.bytes (v - sizeOfDecoder)
-                                |> Decode.map (\_ -> vv)
-                        )
+                if v == value then
+                    Decode.succeed ()
+
+                else
+                    Decode.fail
             )
 
 
