@@ -129,26 +129,26 @@ eventDecoder parent =
     Decode.unsignedInt8
         |> Decode.andThen
             (\v ->
-                case ( bitwiseClear 0x0F v, v ) of
-                    ( 0x80, _ ) ->
+                case ( Bitwise.shiftRightBy 1 v, v ) of
+                    ( 0x08, _ ) ->
                         noteOffEvent
 
-                    ( 0x90, _ ) ->
+                    ( 0x09, _ ) ->
                         noteOnEvent
 
-                    ( 0xA0, _ ) ->
+                    ( 0x0A, _ ) ->
                         noteAfterTouchEvent
 
-                    ( 0xB0, _ ) ->
+                    ( 0x0B, _ ) ->
                         controlChangeEvent
 
-                    ( 0xC0, _ ) ->
+                    ( 0x0C, _ ) ->
                         programChangeEvent
 
-                    ( 0xD0, _ ) ->
+                    ( 0x0D, _ ) ->
                         channelAfterTouchEvent
 
-                    ( 0xE0, _ ) ->
+                    ( 0x0E, _ ) ->
                         pitchBendEvent
 
                     ( _, 0xFF ) ->
