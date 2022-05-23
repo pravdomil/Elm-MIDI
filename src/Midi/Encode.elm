@@ -7,7 +7,7 @@ module Midi.Encode exposing (file, track, message, event)
 -}
 
 import Bitwise
-import Bytes exposing (Bytes)
+import Bytes
 import Bytes.Encode as Encode
 import Midi
 
@@ -18,7 +18,7 @@ type Error
 
 {-| Encode MIDI file.
 -}
-file : Midi.File -> Result Error Bytes
+file : Midi.File -> Result Error Bytes.Bytes
 file a =
     let
         format : Int
@@ -53,7 +53,7 @@ file a =
 
 {-| Encode MIDI track.
 -}
-track : Midi.Track -> Result Error Bytes
+track : Midi.Track -> Result Error Bytes.Bytes
 track a =
     let
         encodedMsgs : Result Error (List Encode.Encoder)
@@ -85,7 +85,7 @@ track a =
 
 {-| Encode MIDI message.
 -}
-message : Midi.Message -> Result Error Bytes
+message : Midi.Message -> Result Error Bytes.Bytes
 message a =
     event a.event
         |> Result.map
@@ -100,7 +100,7 @@ message a =
 
 {-| Encode MIDI event.
 -}
-event : Midi.Event -> Result Error Bytes
+event : Midi.Event -> Result Error Bytes.Bytes
 event a =
     (case a of
         Midi.SequenceNumber _ ->
