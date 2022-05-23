@@ -9,228 +9,215 @@ module Midi.Encode exposing (file, track, message, event)
 import Bitwise
 import Bytes
 import Bytes.Encode as Encode
+import Bytes.Encode.Extra
 import Midi
-
-
-type Error
-    = NotSupportedEvent String
 
 
 {-| Encode MIDI file.
 -}
-file : Midi.File -> Result Error Bytes.Bytes
+file : Midi.File -> Encode.Encoder
 file a =
     let
         format : Int
         format =
             case a.format of
                 Midi.Simultaneous ->
-                    1
+                    0
 
                 Midi.Independent ->
                     2
 
-        encodedTracks : Result Error (List Encode.Encoder)
-        encodedTracks =
-            (Tuple.first a.tracks :: Tuple.second a.tracks)
-                |> List.map (track >> Result.map Encode.bytes)
-                |> resultSequence
+        tracks : List Midi.Track
+        tracks =
+            Tuple.first a.tracks :: Tuple.second a.tracks
+
+        header : Bytes.Bytes
+        header =
+            [ Encode.unsignedInt16 endianness format
+            , Encode.unsignedInt16 endianness (List.length tracks)
+            , Encode.unsignedInt16 endianness ((\(Midi.TicksPerBeat v) -> v) a.tempo)
+            ]
+                |> Encode.sequence
+                |> Encode.encode
     in
-    encodedTracks
-        |> Result.map
-            (\v ->
-                [ Encode.string "MThd"
-                , Encode.unsignedInt32 endianness 6
-                , Encode.unsignedInt16 endianness format
-                , Encode.unsignedInt16 endianness (List.length v)
-                , Encode.unsignedInt16 endianness a.tempo
-                , Encode.sequence v
-                ]
-                    |> Encode.sequence
-                    |> Encode.encode
-            )
+    [ Encode.string "MThd"
+    , Encode.unsignedInt32 endianness (header |> Bytes.width)
+    , Encode.bytes header
+    , Encode.sequence (tracks |> List.map track)
+    ]
+        |> Encode.sequence
 
 
 {-| Encode MIDI track.
 -}
-track : Midi.Track -> Result Error Bytes.Bytes
+track : Midi.Track -> Encode.Encoder
 track a =
     let
-        encodedMsgs : Result Error (List Encode.Encoder)
-        encodedMsgs =
-            a
-                |> List.map (message >> Result.map Encode.bytes)
-                |> resultSequence
-                |> Result.map
-                    (\v ->
-                        [ Encode.sequence v
-                        , Encode.unsignedInt8 0x00
-                        , Encode.unsignedInt8 0xFF
-                        , Encode.unsignedInt8 0x2F
-                        , Encode.unsignedInt8 0x00
-                        ]
-                    )
-    in
-    encodedMsgs
-        |> Result.map
-            (\v ->
-                [ Encode.string "MTrk"
-                , Encode.unsignedInt32 endianness (List.length v)
-                , Encode.sequence v
+        messages : Bytes.Bytes
+        messages =
+            Encode.sequence
+                [ a |> List.map message |> Encode.sequence
+                , event Midi.EndOfTrack
                 ]
-                    |> Encode.sequence
-                    |> Encode.encode
-            )
+                |> Encode.encode
+    in
+    [ Encode.string "MTrk"
+    , Encode.unsignedInt32 endianness (messages |> Bytes.width)
+    , Encode.bytes messages
+    ]
+        |> Encode.sequence
 
 
 {-| Encode MIDI message.
 -}
-message : Midi.Message -> Result Error Bytes.Bytes
+message : Midi.Message -> Encode.Encoder
 message a =
-    event a.event
-        |> Result.map
-            (\v ->
-                [ varInt a.delta
-                , Encode.bytes v
-                ]
-                    |> Encode.sequence
-                    |> Encode.encode
-            )
+    [ variableInt a.delta
+    , event a.event
+    ]
+        |> Encode.sequence
 
 
 {-| Encode MIDI event.
 -}
-event : Midi.Event -> Result Error Bytes.Bytes
+event : Midi.Event -> Encode.Encoder
 event a =
-    (case a of
-        Midi.SequenceNumber _ ->
-            Err (NotSupportedEvent "SequenceNumber")
+    let
+        metaEvent : Int -> Encode.Encoder -> Encode.Encoder
+        metaEvent type_ encoder =
+            let
+                bytes : Bytes.Bytes
+                bytes =
+                    Encode.encode encoder
+            in
+            Encode.sequence
+                [ Encode.unsignedInt8 0xFF
+                , Encode.unsignedInt8 type_
+                , variableInt (bytes |> Bytes.width)
+                , Encode.bytes bytes
+                ]
 
-        Midi.Text _ ->
-            Err (NotSupportedEvent "Text")
+        controlEvent : Int -> Midi.Channel -> Int -> Int -> Encode.Encoder
+        controlEvent type_ (Midi.Channel channel) b c =
+            Encode.sequence
+                [ Encode.unsignedInt8 (channel + type_)
+                , Encode.unsignedInt8 b
+                , Encode.unsignedInt8 c
+                ]
 
-        Midi.Copyright _ ->
-            Err (NotSupportedEvent "Copyright")
+        controlEvent2 : Int -> Midi.Channel -> Int -> Encode.Encoder
+        controlEvent2 type_ (Midi.Channel channel) b =
+            Encode.sequence
+                [ Encode.unsignedInt8 (channel + type_)
+                , Encode.unsignedInt8 b
+                ]
+    in
+    case a of
+        Midi.SequenceNumber b ->
+            metaEvent 0x00 (Encode.unsignedInt16 endianness b)
 
-        Midi.TrackName _ ->
-            Err (NotSupportedEvent "TrackName")
+        Midi.Text b ->
+            metaEvent 0x01 (Encode.string b)
 
-        Midi.InstrumentName _ ->
-            Err (NotSupportedEvent "InstrumentName")
+        Midi.Copyright b ->
+            metaEvent 0x02 (Encode.string b)
 
-        Midi.Lyrics _ ->
-            Err (NotSupportedEvent "Lyrics")
+        Midi.TrackName b ->
+            metaEvent 0x03 (Encode.string b)
 
-        Midi.Marker _ ->
-            Err (NotSupportedEvent "Marker")
+        Midi.InstrumentName b ->
+            metaEvent 0x04 (Encode.string b)
 
-        Midi.CuePoint _ ->
-            Err (NotSupportedEvent "CuePoint")
+        Midi.Lyrics b ->
+            metaEvent 0x05 (Encode.string b)
 
-        Midi.ChannelPrefix _ ->
-            Err (NotSupportedEvent "ChannelPrefix")
+        Midi.Marker b ->
+            metaEvent 0x06 (Encode.string b)
+
+        Midi.CuePoint b ->
+            metaEvent 0x07 (Encode.string b)
+
+        Midi.ChannelPrefix b ->
+            metaEvent 0x20 (Encode.unsignedInt8 b)
 
         Midi.EndOfTrack ->
-            Ok []
+            metaEvent 0x2F (Encode.sequence [])
 
-        Midi.Tempo _ ->
-            Err (NotSupportedEvent "Tempo")
+        Midi.Tempo b ->
+            metaEvent 0x51 (Bytes.Encode.Extra.unsignedInt24 endianness b)
 
-        Midi.SMPTEOffset _ _ _ _ _ ->
-            Err (NotSupportedEvent "SMPTEOffset")
+        Midi.SMPTEOffset b c d e f ->
+            metaEvent 0x54
+                (Encode.sequence
+                    [ Encode.signedInt8 b
+                    , Encode.unsignedInt8 c
+                    , Encode.unsignedInt8 d
+                    , Encode.unsignedInt8 e
+                    , Encode.unsignedInt8 f
+                    ]
+                )
 
-        Midi.TimeSignature _ _ _ _ ->
-            Err (NotSupportedEvent "TimeSignature")
+        Midi.TimeSignature b c d e ->
+            metaEvent 0x58
+                (Encode.sequence
+                    [ Encode.signedInt8 b
+                    , Encode.unsignedInt8 c
+                    , Encode.unsignedInt8 d
+                    , Encode.unsignedInt8 e
+                    ]
+                )
 
-        Midi.KeySignature _ _ ->
-            Err (NotSupportedEvent "KeySignature")
+        Midi.KeySignature b c ->
+            metaEvent 0x59
+                (Encode.sequence
+                    [ Encode.signedInt8 b
+                    , Encode.unsignedInt8 c
+                    ]
+                )
 
-        Midi.SequencerSpecific _ ->
-            Err (NotSupportedEvent "SequencerSpecific")
+        Midi.SequencerSpecific b ->
+            metaEvent 0x7F (Encode.bytes b)
 
-        Midi.Unknown _ _ ->
-            Err (NotSupportedEvent "Unknown")
-
-        --
-        Midi.NoteOff channel note velocity ->
-            Ok
-                [ Encode.unsignedInt8 (0x80 + channel)
-                , Encode.unsignedInt8 note
-                , Encode.unsignedInt8 velocity
-                ]
-
-        Midi.NoteOn channel note velocity ->
-            Ok
-                [ Encode.unsignedInt8 (0x90 + channel)
-                , Encode.unsignedInt8 note
-                , Encode.unsignedInt8 velocity
-                ]
-
-        Midi.NoteAfterTouch channel note velocity ->
-            Ok
-                [ Encode.unsignedInt8 (0xA0 + channel)
-                , Encode.unsignedInt8 note
-                , Encode.unsignedInt8 velocity
-                ]
-
-        Midi.ControlChange channel controllerNumber value ->
-            Ok
-                [ Encode.unsignedInt8 (0xB0 + channel)
-                , Encode.unsignedInt8 controllerNumber
-                , Encode.unsignedInt8 value
-                ]
-
-        Midi.ProgramChange channel value ->
-            Ok
-                [ Encode.unsignedInt8 (0xC0 + channel)
-                , Encode.unsignedInt8 value
-                ]
-
-        Midi.ChannelAfterTouch channel velocity ->
-            Ok
-                [ Encode.unsignedInt8 (0xD0 + channel)
-                , Encode.unsignedInt8 velocity
-                ]
-
-        Midi.PitchBend channel bend ->
-            let
-                lower : Int
-                lower =
-                    Bitwise.and bend 127
-
-                upper : Int
-                upper =
-                    Bitwise.shiftRightBy 7 bend
-            in
-            Ok
-                [ Encode.unsignedInt8 (0xE0 + channel)
-                , Encode.unsignedInt8 lower
-                , Encode.unsignedInt8 upper
-                ]
+        Midi.Unknown b c ->
+            metaEvent b (Encode.bytes c)
 
         --
-        Midi.SysEx bytes ->
-            Ok
+        Midi.NoteOff b (Midi.Note c) (Midi.Velocity d) ->
+            controlEvent 0x80 b c d
+
+        Midi.NoteOn b (Midi.Note c) (Midi.Velocity d) ->
+            controlEvent 0x90 b c d
+
+        Midi.NoteAfterTouch b (Midi.Note c) (Midi.Velocity d) ->
+            controlEvent 0xA0 b c d
+
+        Midi.ControllerChange b (Midi.ControllerNumber c) (Midi.Velocity d) ->
+            controlEvent 0xB0 b c d
+
+        Midi.ProgramChange b (Midi.ProgramNumber c) ->
+            controlEvent2 0xC0 b c
+
+        Midi.ChannelAfterTouch b (Midi.Velocity c) ->
+            controlEvent2 0xD0 b c
+
+        Midi.PitchBend b (Midi.Velocity c) ->
+            controlEvent2 0xE0 b c
+
+        --
+        Midi.SystemExclusive bytes ->
+            Encode.sequence
                 [ Encode.unsignedInt8 0xF0
                 , Encode.bytes bytes
-                , Encode.unsignedInt8 0xF7
                 ]
-    )
-        |> Result.map (Encode.sequence >> Encode.encode)
 
 
 
 -- Helpers
 
 
-endianness : Bytes.Endianness
-endianness =
-    Bytes.BE
-
-
-varInt : Int -> Encode.Encoder
-varInt a =
-    -- TODO use Bytes module instead of Int
+variableInt : Int -> Encode.Encoder
+variableInt a =
+    -- todo use Bytes module instead of Int
     let
         helper : Int -> List Int -> List Int
         helper b bytes =
@@ -252,6 +239,6 @@ varInt a =
         |> Encode.sequence
 
 
-resultSequence : List (Result x a) -> Result x (List a)
-resultSequence a =
-    List.foldr (Result.map2 (::)) (Ok []) a
+endianness : Bytes.Endianness
+endianness =
+    Bytes.BE

@@ -1,7 +1,8 @@
 module Midi exposing
     ( File, Format(..), Track
-    , Message, Ticks, Event(..)
-    , Channel, Note, Velocity
+    , Message, Event(..)
+    , Channel(..), Note(..), Velocity(..)
+    , ControllerNumber(..), ProgramNumber(..), TicksPerBeat(..)
     )
 
 {-| Type definitions for MIDI.
@@ -31,8 +32,8 @@ type alias File =
 
 {-| Ticks per beat.
 -}
-type alias TicksPerBeat =
-    Int
+type TicksPerBeat
+    = TicksPerBeat Int
 
 
 {-| Distinguish between MIDI formats.
@@ -56,15 +57,9 @@ type alias Track =
 {-| MIDI message.
 -}
 type alias Message =
-    { delta : Ticks
+    { delta : Int
     , event : Event
     }
-
-
-{-| MIDI ticks.
--}
-type alias Ticks =
-    Int
 
 
 {-| MIDI event.
@@ -85,33 +80,43 @@ type Event
     | SMPTEOffset Int Int Int Int Int
     | TimeSignature Int Int Int Int
     | KeySignature Int Int
-    | SequencerSpecific (List Int)
-    | Unknown Int (List Int)
+    | SequencerSpecific Bytes
+    | Unknown Int Bytes
       -- Control
     | NoteOff Channel Note Velocity
     | NoteOn Channel Note Velocity
     | NoteAfterTouch Channel Note Velocity
-    | ControlChange Channel Int Int
-    | ProgramChange Channel Int
+    | ControllerChange Channel ControllerNumber Velocity
+    | ProgramChange Channel ProgramNumber
     | ChannelAfterTouch Channel Velocity
-    | PitchBend Channel Int
+    | PitchBend Channel Velocity
       -- System Exclusive
-    | SysEx Bytes
+    | SystemExclusive Bytes
 
 
 {-| MIDI channel.
 -}
-type alias Channel =
-    Int
+type Channel
+    = Channel Int
 
 
 {-| MIDI note.
 -}
-type alias Note =
-    Int
+type Note
+    = Note Int
 
 
-{-| MIDI velocity (volume).
+{-| MIDI velocity.
 -}
-type alias Velocity =
-    Int
+type Velocity
+    = Velocity Int
+
+
+{-| -}
+type ControllerNumber
+    = ControllerNumber Int
+
+
+{-| -}
+type ProgramNumber
+    = ProgramNumber Int
