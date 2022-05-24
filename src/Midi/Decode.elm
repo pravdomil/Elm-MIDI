@@ -333,7 +333,7 @@ decodeVariableInt =
                             next =
                                 v |> Bitwise.and 0x7F |> Bitwise.or acc
                         in
-                        if Bitwise.and v 0x80 /= 0 then
+                        if Bitwise.and 0x80 v /= 0 then
                             Decode.Loop (next |> Bitwise.shiftLeftBy 7)
 
                         else
