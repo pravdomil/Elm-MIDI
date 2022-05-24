@@ -16,6 +16,8 @@ module Midi exposing
 
 @docs Channel, Note, Velocity
 
+@docs ControllerNumber, ProgramNumber, TicksPerBeat
+
 -}
 
 import Bytes exposing (Bytes)
