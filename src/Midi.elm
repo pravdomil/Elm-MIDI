@@ -24,8 +24,8 @@ import Bytes exposing (Bytes)
 {-| A MIDI file.
 -}
 type alias File =
-    { tempo : TicksPerBeat
-    , format : Format
+    { format : Format
+    , tempo : TicksPerBeat
     , tracks : ( Track, List Track )
     }
 

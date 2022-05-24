@@ -65,7 +65,7 @@ fileDecoder =
         |> Decode.andThen (\v -> decodeChunk v headerDecoder)
         |> Decode.andThen
             (\( v1, v2, v3 ) ->
-                Decode.map (Midi.File v3 v1) (tracks v2)
+                Decode.map (Midi.File v1 v3) (tracks v2)
             )
 
 
