@@ -227,7 +227,7 @@ encodeVariableInt a =
             else
                 helper
                     (Bitwise.shiftRightBy 7 b)
-                    (Bitwise.or 0x80 (Bitwise.and 0x7F b) :: acc)
+                    ((b |> Bitwise.and 0x7F |> Bitwise.or 0x80) :: acc)
     in
     if a < 0x80 then
         Encode.unsignedInt8 a
