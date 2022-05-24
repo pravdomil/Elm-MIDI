@@ -31,8 +31,8 @@ midiFileFuzzer : Fuzz.Fuzzer Midi.File
 midiFileFuzzer =
     Fuzz.map3
         Midi.File
-        tempoFuzzer
         formatFuzzer
+        tempoFuzzer
         tracksFuzzer
 
 
