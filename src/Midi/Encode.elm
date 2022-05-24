@@ -236,7 +236,7 @@ encodeVariableInt a =
      else
         helper (Bitwise.shiftRightBy 7 a) [ Bitwise.and 127 a ]
     )
-        |> List.map Encode.signedInt8
+        |> List.map Encode.unsignedInt8
         |> Encode.sequence
 
 
