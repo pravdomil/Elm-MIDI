@@ -207,6 +207,7 @@ event a =
         Midi.SystemExclusive b ->
             Encode.sequence
                 [ Encode.unsignedInt8 0xF0
+                , variableInt (b |> Bytes.width)
                 , Encode.bytes b
                 ]
 
