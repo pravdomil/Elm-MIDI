@@ -72,7 +72,7 @@ track a =
 -}
 event : Midi.Event -> Encode.Encoder
 event a =
-    [ variableInt ((\(Midi.Ticks v) -> v) a.delta)
+    [ encodeVariableInt ((\(Midi.Ticks v) -> v) a.delta)
     , eventType a.event
     ]
         |> Encode.sequence
@@ -93,7 +93,7 @@ eventType a =
             Encode.sequence
                 [ Encode.unsignedInt8 0xFF
                 , Encode.unsignedInt8 type_
-                , variableInt (bytes |> Bytes.width)
+                , encodeVariableInt (bytes |> Bytes.width)
                 , Encode.bytes bytes
                 ]
 
@@ -207,7 +207,7 @@ eventType a =
         Midi.SystemExclusive b ->
             Encode.sequence
                 [ Encode.unsignedInt8 0xF0
-                , variableInt (b |> Bytes.width)
+                , encodeVariableInt (b |> Bytes.width)
                 , Encode.bytes b
                 ]
 
@@ -216,8 +216,8 @@ eventType a =
 -- Helpers
 
 
-variableInt : Int -> Encode.Encoder
-variableInt a =
+encodeVariableInt : Int -> Encode.Encoder
+encodeVariableInt a =
     -- todo use Bytes module instead of Int
     let
         helper : Int -> List Int -> List Int
