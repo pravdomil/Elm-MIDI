@@ -222,12 +222,12 @@ encodeVariableInt a =
         helper : Int -> List Int -> List Int
         helper b acc =
             if b < 128 then
-                (b + 128) :: acc
+                Bitwise.or 128 b :: acc
 
             else
                 helper
                     (Bitwise.shiftRightBy 7 b)
-                    ((128 + Bitwise.and 127 b) :: acc)
+                    (Bitwise.or 128 (Bitwise.and 127 b) :: acc)
     in
     if a < 128 then
         Encode.unsignedInt8 a
