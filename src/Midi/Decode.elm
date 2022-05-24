@@ -34,14 +34,11 @@ event a =
 fileDecoder : Decoder Midi.File
 fileDecoder =
     let
-        decoder : Decoder Midi.File
-        decoder =
+        headerDecoder : Decoder ( Midi.Format, Int, Midi.TicksPerBeat )
+        headerDecoder =
             Decode.map3
                 (\v1 v2 v3 ->
-                    { format = v1
-                    , trackCount = v2
-                    , tempo = v3
-                    }
+                    ( v1, v2, v3 )
                 )
                 (Decode.unsignedInt16 endianness
                     |> Decode.andThen
@@ -62,14 +59,14 @@ fileDecoder =
                 )
                 (Decode.unsignedInt16 endianness)
                 (Decode.unsignedInt16 endianness |> Decode.map Midi.TicksPerBeat)
-                |> Decode.andThen
-                    (\v ->
-                        Decode.map (Midi.File v.tempo v.format) (tracks v.trackCount)
-                    )
     in
     decodeStringConst "MThd"
         |> Decode.andThen (\_ -> Decode.unsignedInt32 endianness)
-        |> Decode.andThen (\v -> decodeChunk v decoder)
+        |> Decode.andThen (\v -> decodeChunk v headerDecoder)
+        |> Decode.andThen
+            (\( v1, v2, v3 ) ->
+                Decode.map (Midi.File v3 v1) (tracks v2)
+            )
 
 
 tracks : Int -> Decoder ( Midi.Track, List Midi.Track )
