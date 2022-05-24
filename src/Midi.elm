@@ -1,6 +1,6 @@
 module Midi exposing
     ( File, Format(..), Track
-    , Message, Ticks(..), Event(..)
+    , Event, Ticks(..), EventType(..)
     , Channel(..), Note(..), Velocity(..)
     , ControllerNumber(..), ProgramNumber(..), TicksPerBeat(..)
     )
@@ -12,7 +12,7 @@ module Midi exposing
 
 @docs File, Format, Track
 
-@docs Message, Ticks, Event
+@docs Event, Ticks, EventType
 
 @docs Channel, Note, Velocity
 
@@ -49,14 +49,14 @@ type Format
 {-| MIDI track.
 -}
 type alias Track =
-    List Message
+    List Event
 
 
-{-| MIDI message.
+{-| MIDI event.
 -}
-type alias Message =
+type alias Event =
     { delta : Ticks
-    , event : Event
+    , event : EventType
     }
 
 
@@ -66,9 +66,9 @@ type Ticks
     = Ticks Int
 
 
-{-| MIDI event.
+{-| MIDI event type.
 -}
-type Event
+type EventType
     = -- Meta
       SequenceNumber Int
     | Text String

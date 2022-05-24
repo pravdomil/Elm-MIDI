@@ -59,12 +59,12 @@ tracksFuzzer =
 
 trackFuzzer : Fuzz.Fuzzer Midi.Track
 trackFuzzer =
-    Fuzz.list messageFuzzer
+    Fuzz.list eventFuzzer
 
 
-messageFuzzer : Fuzz.Fuzzer Midi.Message
-messageFuzzer =
-    Fuzz.map2 Midi.Message ticksFuzzer eventFuzzer
+eventFuzzer : Fuzz.Fuzzer Midi.Event
+eventFuzzer =
+    Fuzz.map2 Midi.Event ticksFuzzer eventTypeFuzzer
 
 
 ticksFuzzer : Fuzz.Fuzzer Midi.Ticks
@@ -72,8 +72,8 @@ ticksFuzzer =
     Fuzz.map Midi.Ticks (Fuzz.intRange 0 0x0FFFFFFF)
 
 
-eventFuzzer : Fuzz.Fuzzer Midi.Event
-eventFuzzer =
+eventTypeFuzzer : Fuzz.Fuzzer Midi.EventType
+eventTypeFuzzer =
     Fuzz.oneOf
         [ noteOffFuzzer
         , noteOnFuzzer
@@ -90,42 +90,42 @@ eventFuzzer =
 --
 
 
-noteOffFuzzer : Fuzz.Fuzzer Midi.Event
+noteOffFuzzer : Fuzz.Fuzzer Midi.EventType
 noteOffFuzzer =
     Fuzz.map3 Midi.NoteOff channelFuzzer noteFuzzer velocityFuzzer
 
 
-noteOnFuzzer : Fuzz.Fuzzer Midi.Event
+noteOnFuzzer : Fuzz.Fuzzer Midi.EventType
 noteOnFuzzer =
     Fuzz.map3 Midi.NoteOn channelFuzzer noteFuzzer positiveVelocityFuzzer
 
 
-noteAfterTouchFuzzer : Fuzz.Fuzzer Midi.Event
+noteAfterTouchFuzzer : Fuzz.Fuzzer Midi.EventType
 noteAfterTouchFuzzer =
     Fuzz.map3 Midi.NoteAfterTouch channelFuzzer noteFuzzer velocityFuzzer
 
 
-controllerChangeFuzzer : Fuzz.Fuzzer Midi.Event
+controllerChangeFuzzer : Fuzz.Fuzzer Midi.EventType
 controllerChangeFuzzer =
     Fuzz.map3 Midi.ControllerChange channelFuzzer controllerNumberFuzzer velocityFuzzer
 
 
-programChangeFuzzer : Fuzz.Fuzzer Midi.Event
+programChangeFuzzer : Fuzz.Fuzzer Midi.EventType
 programChangeFuzzer =
     Fuzz.map2 Midi.ProgramChange channelFuzzer programNumberFuzzer
 
 
-channelAfterTouchFuzzer : Fuzz.Fuzzer Midi.Event
+channelAfterTouchFuzzer : Fuzz.Fuzzer Midi.EventType
 channelAfterTouchFuzzer =
     Fuzz.map2 Midi.ChannelAfterTouch channelFuzzer velocityFuzzer
 
 
-pitchBendFuzzer : Fuzz.Fuzzer Midi.Event
+pitchBendFuzzer : Fuzz.Fuzzer Midi.EventType
 pitchBendFuzzer =
     Fuzz.map2 Midi.PitchBend channelFuzzer (Fuzz.intRange 0 16383 |> Fuzz.map Midi.Velocity)
 
 
-systemExclusiveFuzzer : Fuzz.Fuzzer Midi.Event
+systemExclusiveFuzzer : Fuzz.Fuzzer Midi.EventType
 systemExclusiveFuzzer =
     Fuzz.map Midi.SystemExclusive bytesFuzzer
 
