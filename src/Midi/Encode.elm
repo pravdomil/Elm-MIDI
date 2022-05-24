@@ -218,26 +218,24 @@ eventType a =
 
 encodeVariableInt : Int -> Encode.Encoder
 encodeVariableInt a =
-    -- todo use Bytes module instead of Int
     let
         helper : Int -> List Int -> List Int
-        helper b bytes =
+        helper b acc =
             if b < 128 then
-                (b + 128) :: bytes
+                (b + 128) :: acc
 
             else
                 helper
                     (Bitwise.shiftRightBy 7 b)
-                    ((128 + Bitwise.and 127 b) :: bytes)
+                    ((128 + Bitwise.and 127 b) :: acc)
     in
-    (if a < 128 then
-        [ a ]
+    if a < 128 then
+        Encode.unsignedInt8 a
 
-     else
+    else
         helper (Bitwise.shiftRightBy 7 a) [ Bitwise.and 127 a ]
-    )
-        |> List.map Encode.unsignedInt8
-        |> Encode.sequence
+            |> List.map Encode.unsignedInt8
+            |> Encode.sequence
 
 
 endianness : Bytes.Endianness
