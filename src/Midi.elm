@@ -56,7 +56,7 @@ type alias Track =
 -}
 type alias Event =
     { delta : Ticks
-    , event : EventType
+    , type_ : EventType
     }
 
 

@@ -108,7 +108,7 @@ events =
             event (List.head acc)
                 |> Decode.map
                     (\v ->
-                        if v.event == Midi.EndOfTrack then
+                        if v.type_ == Midi.EndOfTrack then
                             Decode.Done (List.reverse acc)
 
                         else
@@ -193,7 +193,7 @@ eventType_ previous =
                     _ ->
                         case previous of
                             Just a ->
-                                case a.event of
+                                case a.type_ of
                                     Midi.NoteOff channel_ _ _ ->
                                         Decode.map
                                             (Midi.NoteOff channel_ (Midi.Note v))
