@@ -1,23 +1,30 @@
 {
-    "type": "package",
-    "name": "foo/bar",
-    "summary": "Package for handling MIDI files.",
-    "license": "BSD-3-Clause",
-    "version": "3.0.0",
-    "exposed-modules": [
-        "Midi.Decode",
-        "Midi.Encode",
-        "Midi"
+    "type": "application",
+    "source-directories": [
+        "src"
     ],
-    "elm-version": "0.19.0 <= v < 0.20.0",
+    "elm-version": "0.19.1",
     "dependencies": {
-        "TSFoster/elm-bytes-extra": "1.3.0 <= v < 2.0.0",
-        "elm/bytes": "1.0.8 <= v < 2.0.0",
-        "elm/core": "1.0.5 <= v < 2.0.0",
-        "elm/parser": "1.1.0 <= v < 2.0.0"
+        "direct": {
+            "TSFoster/elm-bytes-extra": "1.3.0",
+            "elm/browser": "1.0.2",
+            "elm/bytes": "1.0.8",
+            "elm/core": "1.0.5"
+        },
+        "indirect": {
+            "elm/html": "1.0.0",
+            "elm/json": "1.1.3",
+            "elm/time": "1.0.0",
+            "elm/url": "1.0.0",
+            "elm/virtual-dom": "1.0.3"
+        }
     },
     "test-dependencies": {
-        "elm/random": "1.0.0 <= v < 2.0.0",
-        "elm-explorations/test": "1.2.2 <= v < 2.0.0"
+        "direct": {
+            "elm-explorations/test": "1.2.2"
+        },
+        "indirect": {
+            "elm/random": "1.0.0"
+        }
     }
 }
