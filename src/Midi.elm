@@ -1,6 +1,6 @@
 module Midi exposing
     ( File, Format(..), Track
-    , Message, Event(..)
+    , Message, Ticks(..), Event(..)
     , Channel(..), Note(..), Velocity(..)
     , ControllerNumber(..), ProgramNumber(..), TicksPerBeat(..)
     )
@@ -53,9 +53,15 @@ type alias Track =
 {-| MIDI message.
 -}
 type alias Message =
-    { delta : Int
+    { delta : Ticks
     , event : Event
     }
+
+
+{-| MIDI ticks.
+-}
+type Ticks
+    = Ticks Int
 
 
 {-| MIDI event.

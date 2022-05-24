@@ -64,7 +64,12 @@ trackFuzzer =
 
 messageFuzzer : Fuzz.Fuzzer Midi.Message
 messageFuzzer =
-    Fuzz.map2 Midi.Message (Fuzz.intRange 0 0x0FFFFFFF) eventFuzzer
+    Fuzz.map2 Midi.Message ticksFuzzer eventFuzzer
+
+
+ticksFuzzer : Fuzz.Fuzzer Midi.Ticks
+ticksFuzzer =
+    Fuzz.map Midi.Ticks (Fuzz.intRange 0 0x0FFFFFFF)
 
 
 eventFuzzer : Fuzz.Fuzzer Midi.Event

@@ -57,7 +57,7 @@ track a =
         messages =
             Encode.sequence
                 [ a |> List.map message |> Encode.sequence
-                , message (Midi.Message 0 Midi.EndOfTrack)
+                , message (Midi.Message (Midi.Ticks 0) Midi.EndOfTrack)
                 ]
                 |> Encode.encode
     in
@@ -72,7 +72,7 @@ track a =
 -}
 message : Midi.Message -> Encode.Encoder
 message a =
-    [ variableInt a.delta
+    [ variableInt ((\(Midi.Ticks v) -> v) a.delta)
     , event a.event
     ]
         |> Encode.sequence
