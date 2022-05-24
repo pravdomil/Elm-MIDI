@@ -221,19 +221,19 @@ encodeVariableInt a =
     let
         helper : Int -> List Int -> List Int
         helper b acc =
-            if b < 128 then
-                Bitwise.or 128 b :: acc
+            if b < 0x80 then
+                Bitwise.or 0x80 b :: acc
 
             else
                 helper
                     (Bitwise.shiftRightBy 7 b)
-                    (Bitwise.or 128 (Bitwise.and 127 b) :: acc)
+                    (Bitwise.or 0x80 (Bitwise.and 0x7F b) :: acc)
     in
-    if a < 128 then
+    if a < 0x80 then
         Encode.unsignedInt8 a
 
     else
-        helper (Bitwise.shiftRightBy 7 a) [ Bitwise.and 127 a ]
+        helper (Bitwise.shiftRightBy 7 a) [ Bitwise.and 0x7F a ]
             |> List.map Encode.unsignedInt8
             |> Encode.sequence
 
