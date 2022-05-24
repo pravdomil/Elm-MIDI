@@ -119,7 +119,7 @@ events =
 
 event : Maybe Midi.Event -> Decoder Midi.Event
 event previous =
-    Decode.map2 Midi.Event (Decode.map Midi.Ticks variableInt) (eventType_ previous)
+    Decode.map2 Midi.Event (Decode.map Midi.Ticks decodeVariableInt) (eventType_ previous)
 
 
 
@@ -299,7 +299,7 @@ metaEventType =
     Decode.unsignedInt8
         |> Decode.andThen
             (\v ->
-                variableInt
+                decodeVariableInt
                     |> Decode.andThen
                         (\v2 ->
                             decodeChunk v2 (decoder v v2)
@@ -309,7 +309,7 @@ metaEventType =
 
 systemExclusiveEventType : Decoder Midi.EventType
 systemExclusiveEventType =
-    variableInt
+    decodeVariableInt
         |> Decode.andThen
             (\v ->
                 Decode.bytes v
@@ -321,8 +321,8 @@ systemExclusiveEventType =
 -- Helpers
 
 
-variableInt : Decoder Int
-variableInt =
+decodeVariableInt : Decoder Int
+decodeVariableInt =
     Decode.loop 0
         (\acc ->
             Decode.unsignedInt8
