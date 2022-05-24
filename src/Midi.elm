@@ -50,10 +50,6 @@ type alias Track =
     List Message
 
 
-
---
-
-
 {-| MIDI message.
 -}
 type alias Message =
