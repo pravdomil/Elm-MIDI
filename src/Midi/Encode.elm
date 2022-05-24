@@ -73,7 +73,7 @@ track a =
 event : Midi.Event -> Encode.Encoder
 event a =
     [ encodeVariableInt ((\(Midi.Ticks v) -> v) a.delta)
-    , eventType a.event
+    , eventType a.type_
     ]
         |> Encode.sequence
 
