@@ -174,7 +174,7 @@ eventDecoder previous =
                     0x0E ->
                         Decode.map
                             (Midi.PitchBend channel)
-                            (Decode.unsignedInt8 |> Decode.map Midi.Velocity)
+                            (Decode.unsignedInt16 endianness |> Decode.map Midi.Velocity)
 
                     0x0F ->
                         case v of

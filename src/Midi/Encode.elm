@@ -201,7 +201,7 @@ event a =
             controlEvent2 0xD0 b c
 
         Midi.PitchBend b (Midi.Velocity c) ->
-            controlEvent2 0xE0 b c
+            controlEvent 0xE0 b (c |> Bitwise.shiftRightBy 8) c
 
         --
         Midi.SystemExclusive b ->
