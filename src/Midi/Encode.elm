@@ -204,10 +204,10 @@ event a =
             controlEvent2 0xE0 b c
 
         --
-        Midi.SystemExclusive bytes ->
+        Midi.SystemExclusive b ->
             Encode.sequence
                 [ Encode.unsignedInt8 0xF0
-                , Encode.bytes bytes
+                , Encode.bytes b
                 ]
 
 
