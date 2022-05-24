@@ -1,8 +1,8 @@
-module Midi.Encode exposing (file, track, message, event)
+module Midi.Encode exposing (file, track, event, eventType)
 
 {-| Module for encoding MIDI.
 
-@docs file, track, message, event
+@docs file, track, event, eventType
 
 -}
 
@@ -53,27 +53,17 @@ file a =
 track : Midi.Track -> Encode.Encoder
 track a =
     let
-        messages : Bytes.Bytes
-        messages =
+        events : Bytes.Bytes
+        events =
             Encode.sequence
-                [ a |> List.map message |> Encode.sequence
-                , message (Midi.Message (Midi.Ticks 0) Midi.EndOfTrack)
+                [ a |> List.map event |> Encode.sequence
+                , event (Midi.Event (Midi.Ticks 0) Midi.EndOfTrack)
                 ]
                 |> Encode.encode
     in
     [ Encode.string "MTrk"
-    , Encode.unsignedInt32 endianness (messages |> Bytes.width)
-    , Encode.bytes messages
-    ]
-        |> Encode.sequence
-
-
-{-| Encode MIDI message.
--}
-message : Midi.Message -> Encode.Encoder
-message a =
-    [ variableInt ((\(Midi.Ticks v) -> v) a.delta)
-    , event a.event
+    , Encode.unsignedInt32 endianness (events |> Bytes.width)
+    , Encode.bytes events
     ]
         |> Encode.sequence
 
@@ -82,6 +72,16 @@ message a =
 -}
 event : Midi.Event -> Encode.Encoder
 event a =
+    [ variableInt ((\(Midi.Ticks v) -> v) a.delta)
+    , eventType a.event
+    ]
+        |> Encode.sequence
+
+
+{-| Encode MIDI event type.
+-}
+eventType : Midi.EventType -> Encode.Encoder
+eventType a =
     let
         metaEvent : Int -> Encode.Encoder -> Encode.Encoder
         metaEvent type_ encoder =

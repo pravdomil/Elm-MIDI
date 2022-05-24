@@ -1,8 +1,8 @@
-module Midi.Decode exposing (file, event)
+module Midi.Decode exposing (file, eventType)
 
 {-| Module for decoding MIDI.
 
-@docs file, event
+@docs file, eventType
 
 -}
 
@@ -22,9 +22,9 @@ file a =
 
 {-| Decode MIDI event.
 -}
-event : Bytes -> Maybe Midi.Event
-event a =
-    Decode.decode (eventDecoder Nothing) a
+eventType : Bytes -> Maybe Midi.EventType
+eventType a =
+    Decode.decode (eventType_ Nothing) a
 
 
 
@@ -98,14 +98,14 @@ track : Decoder Midi.Track
 track =
     decodeStringConst "MTrk"
         |> Decode.andThen (\_ -> Decode.unsignedInt32 endianness)
-        |> Decode.andThen (\v -> decodeChunk v messages)
+        |> Decode.andThen (\v -> decodeChunk v events)
 
 
-messages : Decoder (List Midi.Message)
-messages =
+events : Decoder (List Midi.Event)
+events =
     Decode.loop []
         (\acc ->
-            message (List.head acc)
+            event (List.head acc)
                 |> Decode.map
                     (\v ->
                         if v.event == Midi.EndOfTrack then
@@ -117,17 +117,17 @@ messages =
         )
 
 
-message : Maybe Midi.Message -> Decoder Midi.Message
-message previous =
-    Decode.map2 Midi.Message (Decode.map Midi.Ticks variableInt) (eventDecoder previous)
+event : Maybe Midi.Event -> Decoder Midi.Event
+event previous =
+    Decode.map2 Midi.Event (Decode.map Midi.Ticks variableInt) (eventType_ previous)
 
 
 
 --
 
 
-eventDecoder : Maybe Midi.Message -> Decoder Midi.Event
-eventDecoder previous =
+eventType_ : Maybe Midi.Event -> Decoder Midi.EventType
+eventType_ previous =
     Decode.unsignedInt8
         |> Decode.andThen
             (\v ->
@@ -179,13 +179,13 @@ eventDecoder previous =
                     0x0F ->
                         case v of
                             0xFF ->
-                                metaEvent
+                                metaEventType
 
                             0xF0 ->
-                                systemExclusiveEvent
+                                systemExclusiveEventType
 
                             0xF7 ->
-                                systemExclusiveEvent
+                                systemExclusiveEventType
 
                             _ ->
                                 Decode.fail
@@ -231,10 +231,10 @@ eventDecoder previous =
             )
 
 
-metaEvent : Decoder Midi.Event
-metaEvent =
+metaEventType : Decoder Midi.EventType
+metaEventType =
     let
-        decoder : Int -> Int -> Decoder Midi.Event
+        decoder : Int -> Int -> Decoder Midi.EventType
         decoder type_ length =
             case type_ of
                 0x00 ->
@@ -307,8 +307,8 @@ metaEvent =
             )
 
 
-systemExclusiveEvent : Decoder Midi.Event
-systemExclusiveEvent =
+systemExclusiveEventType : Decoder Midi.EventType
+systemExclusiveEventType =
     variableInt
         |> Decode.andThen
             (\v ->
