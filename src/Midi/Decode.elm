@@ -17,7 +17,7 @@ import Midi
 -}
 file : Bytes -> Maybe Midi.File
 file a =
-    Decode.decode fileDecoder a
+    Decode.decode file_ a
 
 
 {-| Decode MIDI event.
@@ -31,8 +31,8 @@ eventType a =
 --
 
 
-fileDecoder : Decoder Midi.File
-fileDecoder =
+file_ : Decoder Midi.File
+file_ =
     let
         headerDecoder : Decoder ( Midi.Format, Int, Midi.TicksPerBeat )
         headerDecoder =
