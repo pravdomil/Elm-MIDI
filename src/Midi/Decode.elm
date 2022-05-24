@@ -119,7 +119,7 @@ messages =
 
 message : Maybe Midi.Message -> Decoder Midi.Message
 message previous =
-    Decode.map2 Midi.Message variableInt (eventDecoder previous)
+    Decode.map2 Midi.Message (Decode.map Midi.Ticks variableInt) (eventDecoder previous)
 
 
 
