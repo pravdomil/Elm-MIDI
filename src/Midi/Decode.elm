@@ -37,13 +37,13 @@ file_ =
         headerDecoder : Decoder ( Midi.Format, Int, Midi.TicksPerBeat )
         headerDecoder =
             Decode.map3
-                (\v1 v2 v3 ->
-                    ( v1, v2, v3 )
+                (\x x2 x3 ->
+                    ( x, x2, x3 )
                 )
                 (Decode.unsignedInt16 endianness
                     |> Decode.andThen
-                        (\v ->
-                            case v of
+                        (\x ->
+                            case x of
                                 0 ->
                                     Decode.succeed Midi.Simultaneous
 
@@ -62,10 +62,10 @@ file_ =
     in
     decodeStringConst "MThd"
         |> Decode.andThen (\_ -> Decode.unsignedInt32 endianness)
-        |> Decode.andThen (\v -> decodeChunk v headerDecoder)
+        |> Decode.andThen (\x -> decodeChunk x headerDecoder)
         |> Decode.andThen
-            (\( v1, v2, v3 ) ->
-                Decode.map (Midi.File v1 v3) (tracks v2)
+            (\( x, x2, x3 ) ->
+                Decode.map (Midi.File x x3) (tracks x2)
             )
 
 
@@ -79,13 +79,13 @@ tracks trackCount =
             else
                 track
                     |> Decode.map
-                        (\v ->
-                            Decode.Loop ( i + 1, v :: acc )
+                        (\x ->
+                            Decode.Loop ( i + 1, x :: acc )
                         )
         )
         |> Decode.andThen
-            (\v ->
-                case v of
+            (\x ->
+                case x of
                     first :: rest ->
                         Decode.succeed ( first, rest )
 
@@ -98,7 +98,7 @@ track : Decoder Midi.Track
 track =
     decodeStringConst "MTrk"
         |> Decode.andThen (\_ -> Decode.unsignedInt32 endianness)
-        |> Decode.andThen (\v -> decodeChunk v events)
+        |> Decode.andThen (\x -> decodeChunk x events)
 
 
 events : Decoder (List Midi.Event)
@@ -107,12 +107,12 @@ events =
         (\acc ->
             event (List.head acc)
                 |> Decode.map
-                    (\v ->
-                        if v.type_ == Midi.EndOfTrack then
+                    (\x ->
+                        if x.type_ == Midi.EndOfTrack then
                             Decode.Done (List.reverse acc)
 
                         else
-                            Decode.Loop (v :: acc)
+                            Decode.Loop (x :: acc)
                     )
         )
 
