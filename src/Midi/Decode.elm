@@ -130,13 +130,13 @@ eventType_ : Maybe Midi.Event -> Decoder Midi.EventType
 eventType_ previous =
     Decode.unsignedInt8
         |> Decode.andThen
-            (\v ->
+            (\x ->
                 let
                     channel : Midi.Channel
                     channel =
-                        Bitwise.and 0x0F v |> Midi.Channel
+                        Bitwise.and 0x0F x |> Midi.Channel
                 in
-                case Bitwise.shiftRightBy 4 v of
+                case Bitwise.shiftRightBy 4 x of
                     0x08 ->
                         Decode.map2
                             (Midi.NoteOff channel)
@@ -177,7 +177,7 @@ eventType_ previous =
                             (Decode.unsignedInt16 endianness |> Decode.map Midi.Velocity)
 
                     0x0F ->
-                        case v of
+                        case x of
                             0xFF ->
                                 metaEventType
 
@@ -196,32 +196,32 @@ eventType_ previous =
                                 case a.type_ of
                                     Midi.NoteOff channel_ _ _ ->
                                         Decode.map
-                                            (Midi.NoteOff channel_ (Midi.Note v))
+                                            (Midi.NoteOff channel_ (Midi.Note x))
                                             (Decode.unsignedInt8 |> Decode.map Midi.Velocity)
 
                                     Midi.NoteOn channel_ _ _ ->
                                         Decode.map
-                                            (Midi.NoteOn channel_ (Midi.Note v))
+                                            (Midi.NoteOn channel_ (Midi.Note x))
                                             (Decode.unsignedInt8 |> Decode.map Midi.Velocity)
 
                                     Midi.NoteAfterTouch channel_ _ _ ->
                                         Decode.map
-                                            (Midi.NoteAfterTouch channel_ (Midi.Note v))
+                                            (Midi.NoteAfterTouch channel_ (Midi.Note x))
                                             (Decode.unsignedInt8 |> Decode.map Midi.Velocity)
 
                                     Midi.ControllerChange channel_ _ _ ->
                                         Decode.map
-                                            (Midi.ControllerChange channel_ (Midi.ControllerNumber v))
+                                            (Midi.ControllerChange channel_ (Midi.ControllerNumber x))
                                             (Decode.unsignedInt8 |> Decode.map Midi.Velocity)
 
                                     Midi.ProgramChange channel_ _ ->
-                                        Decode.succeed (Midi.ProgramChange channel_ (Midi.ProgramNumber v))
+                                        Decode.succeed (Midi.ProgramChange channel_ (Midi.ProgramNumber x))
 
                                     Midi.ChannelAfterTouch channel_ _ ->
-                                        Decode.succeed (Midi.ChannelAfterTouch channel_ (Midi.Velocity v))
+                                        Decode.succeed (Midi.ChannelAfterTouch channel_ (Midi.Velocity x))
 
                                     Midi.PitchBend channel_ _ ->
-                                        Decode.succeed (Midi.PitchBend channel_ (Midi.Velocity v))
+                                        Decode.succeed (Midi.PitchBend channel_ (Midi.Velocity x))
 
                                     _ ->
                                         Decode.fail
@@ -298,11 +298,11 @@ metaEventType =
     in
     Decode.unsignedInt8
         |> Decode.andThen
-            (\v ->
+            (\x ->
                 decodeVariableInt
                     |> Decode.andThen
-                        (\v2 ->
-                            decodeChunk v2 (decoder v v2)
+                        (\x2 ->
+                            decodeChunk x2 (decoder x x2)
                         )
             )
 
@@ -311,8 +311,8 @@ systemExclusiveEventType : Decoder Midi.EventType
 systemExclusiveEventType =
     decodeVariableInt
         |> Decode.andThen
-            (\v ->
-                Decode.bytes v
+            (\x ->
+                Decode.bytes x
             )
         |> Decode.map Midi.SystemExclusive
 
@@ -327,13 +327,13 @@ decodeVariableInt =
         (\acc ->
             Decode.unsignedInt8
                 |> Decode.map
-                    (\v ->
+                    (\x ->
                         let
                             next : Int
                             next =
-                                v |> Bitwise.and 0x7F |> Bitwise.or acc
+                                x |> Bitwise.and 0x7F |> Bitwise.or acc
                         in
-                        if Bitwise.and 0x80 v /= 0 then
+                        if Bitwise.and 0x80 x /= 0 then
                             Decode.Loop (next |> Bitwise.shiftLeftBy 7)
 
                         else
@@ -346,10 +346,10 @@ decodeChunk : Int -> Decoder a -> Decoder a
 decodeChunk length decoder =
     Decode.bytes length
         |> Decode.andThen
-            (\v ->
-                case Decode.decode decoder v of
-                    Just v2 ->
-                        Decode.succeed v2
+            (\x ->
+                case Decode.decode decoder x of
+                    Just x2 ->
+                        Decode.succeed x2
 
                     Nothing ->
                         Decode.fail
@@ -360,8 +360,8 @@ decodeStringConst : String -> Decoder ()
 decodeStringConst a =
     Decode.string (String.length a)
         |> Decode.andThen
-            (\v ->
-                if v == a then
+            (\x ->
+                if x == a then
                     Decode.succeed ()
 
                 else
